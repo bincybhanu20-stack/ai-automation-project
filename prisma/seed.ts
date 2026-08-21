@@ -27,6 +27,18 @@ const DEMO_NOTIFICATION_ID = "00000000-0000-0000-0000-000000000105";
 const DEMO_AUTOMATION_RUN_ID = "00000000-0000-0000-0000-000000000106";
 const DEMO_AUDIT_LOG_ID = "00000000-0000-0000-0000-000000000107";
 
+// A second client company + login, separate from Dana Reyes's account,
+// specifically so authorization tests can prove one client can't see
+// another client's data. Not part of SEED_USERS below because that list is
+// keyed one-per-role, and this is a second CLIENT-role account.
+const SEED_CLIENT_2 = {
+  email: "client2@clientflow.local",
+  name: "Morgan Lee",
+  password: "Client123!",
+  role: Role.CLIENT,
+  companyName: "Globex Trading Co",
+};
+
 // Development-only credentials. Change these before going to production.
 const SEED_USERS = [
   {
@@ -72,12 +84,43 @@ async function main() {
         name: user.name,
         passwordHash,
         role: user.role,
+        // Admin-provisioned dev accounts are trusted from creation — there's
+        // no public self-signup flow for this platform to verify against.
+        emailVerifiedAt: new Date(),
       },
     });
 
     users[user.role] = record;
     console.log(`  user            ${record.email.padEnd(28)} ${record.role}`);
   }
+
+  // --- Second client login (Morgan Lee / Globex), for isolation testing ---
+  const client2PasswordHash = await bcrypt.hash(SEED_CLIENT_2.password, 10);
+  const client2User = await prisma.user.upsert({
+    where: { email: SEED_CLIENT_2.email },
+    update: { name: SEED_CLIENT_2.name, role: SEED_CLIENT_2.role },
+    create: {
+      email: SEED_CLIENT_2.email,
+      name: SEED_CLIENT_2.name,
+      passwordHash: client2PasswordHash,
+      role: SEED_CLIENT_2.role,
+      emailVerifiedAt: new Date(),
+    },
+  });
+  console.log(`  user            ${client2User.email.padEnd(28)} ${client2User.role}`);
+
+  const client2 = await prisma.client.upsert({
+    where: { userId: client2User.id },
+    update: {},
+    create: {
+      userId: client2User.id,
+      companyName: SEED_CLIENT_2.companyName,
+      industry: "Logistics",
+      email: client2User.email,
+      phone: "+971 50 999 8888",
+    },
+  });
+  console.log(`  client          ${client2.companyName} (for isolation testing)`);
 
   const admin = users[Role.ADMIN];
   const manager = users[Role.PROJECT_MANAGER];
@@ -233,6 +276,9 @@ async function main() {
   for (const u of SEED_USERS) {
     console.log(`  ${u.role.padEnd(16)} ${u.email.padEnd(28)} ${u.password}`);
   }
+  console.log(
+    `  ${SEED_CLIENT_2.role.padEnd(16)} ${SEED_CLIENT_2.email.padEnd(28)} ${SEED_CLIENT_2.password}  (Globex — isolation test account)`
+  );
 }
 
 main()

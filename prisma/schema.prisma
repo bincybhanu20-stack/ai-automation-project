@@ -2,7 +2,8 @@
 //
 // Core database layer. Every model below maps to one of the 8 required
 // entities: User, Client, Lead, Project, Task, Notification, AutomationRun,
-// AuditLog.
+// AuditLog — plus VerificationToken, added in the authentication phase to
+// back password reset and email verification.
 //
 // DESIGN DECISIONS beyond the literal spec (each is a correctness fix, not
 // scope creep):
@@ -32,6 +33,16 @@
 //     enum values" throughout — a free-text source field lets "website",
 //     "Website", "web site" all exist as different values, which breaks
 //     reporting by source (a named requirement of this platform).
+//
+//  5. User has failedLoginAttempts/lockedUntil for account-level brute-force
+//     lockout, and emailVerifiedAt for tracking (not yet enforced at login —
+//     see auth phase notes).
+//
+//  6. VerificationToken is one shared table for both password reset and
+//     email verification, distinguished by `type`. Only a HASH of the token
+//     is stored — the plain token exists only in the emailed link, never in
+//     the database — so a leaked database dump cannot be used to reset
+//     anyone's password.
 //
 // N8nAutomation (workflow configuration) is intentionally NOT part of this
 // schema — it belongs to the automation module, not the core data layer, and
@@ -122,6 +133,11 @@ enum AutomationRunStatus {
   FAILED
 }
 
+enum VerificationTokenType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
 // ---------------------------------------------------------------------------
 // User
 // ---------------------------------------------------------------------------
@@ -133,8 +149,19 @@ model User {
   passwordHash String
   role         Role       @default(CLIENT)
   status       UserStatus @default(ACTIVE)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+
+  // Tracked but not yet enforced at login (see src/lib/auth.ts). Set when a
+  // verification link is successfully clicked.
+  emailVerifiedAt DateTime?
+
+  // Account-level brute-force lockout. Incremented on each failed login,
+  // reset on success. When lockedUntil is in the future, login is refused
+  // even with the correct password.
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // one client profile "where applicable" — not every user is a client
   clientProfile Client?
@@ -149,11 +176,34 @@ model User {
   assignedTasks Task[] @relation("AssignedUserTasks")
   createdTasks  Task[] @relation("CreatedUserTasks")
 
-  notifications Notification[]
-  auditLogs     AuditLog[]
+  notifications      Notification[]
+  auditLogs          AuditLog[]
+  verificationTokens VerificationToken[]
 
   @@index([role])
   @@index([status])
+}
+
+// ---------------------------------------------------------------------------
+// VerificationToken — backs password reset and email verification
+// ---------------------------------------------------------------------------
+
+model VerificationToken {
+  id     String                @id @default(uuid())
+  userId String
+  user   User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type   VerificationTokenType
+
+  // SHA-256 hash of the token. The plain token is only ever in the emailed
+  // link and the user's browser — never persisted.
+  tokenHash String @unique
+
+  expiresAt DateTime
+  usedAt    DateTime? // set once, then the token can never be used again
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, type])
 }
 
 // ---------------------------------------------------------------------------

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Container } from "@/components/ui/Container";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { prisma } from "@/lib/prisma";
@@ -72,8 +73,14 @@ export default async function HomePage() {
             Client Management &amp; AI Automation Platform
           </p>
           <p className="mt-1 text-xs uppercase tracking-widest text-slate-600">
-            Phase 1 · Foundation
+            Phase 1 · Foundation &nbsp;·&nbsp; Phase 2 · Authentication
           </p>
+          <Link
+            href="/login"
+            className="gradient-button mt-4 inline-flex items-center rounded-lg px-5 py-2.5 text-sm font-medium text-white"
+          >
+            Log in
+          </Link>
         </div>
 
         <Card>
