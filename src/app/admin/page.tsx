@@ -1,58 +1,62 @@
 import type { Metadata } from "next";
-import { Container } from "@/components/ui/Container";
-import { Card } from "@/components/ui/Card";
-import { DashboardHeader } from "@/components/layout/DashboardHeader";
-import { requireRoleForPage } from "@/lib/page-guards";
-import { prisma } from "@/lib/prisma";
+import {
+  UserPlus,
+  Sparkles,
+  Users2,
+  FolderKanban,
+  CheckSquare,
+  AlertTriangle,
+  Workflow,
+  BadgeCheck,
+} from "lucide-react";
+import { StatCard } from "@/components/admin/StatCard";
+import { requireAdmin } from "@/lib/admin-guard";
+import { getDashboardStats } from "@/lib/services/admin/dashboard";
 
-export const metadata: Metadata = { title: "Admin dashboard" };
-export const dynamic = "force-dynamic";
-
-async function getStats() {
-  const [userCount, clientCount, leadCount, projectCount, taskCount] = await Promise.all([
-    prisma.user.count(),
-    prisma.client.count(),
-    prisma.lead.count(),
-    prisma.project.count(),
-    prisma.task.count(),
-  ]);
-  return { userCount, clientCount, leadCount, projectCount, taskCount };
+export async function generateMetadata(): Promise<Metadata> {
+  await requireAdmin();
+  return { title: "Admin Dashboard" };
 }
 
-export default async function AdminPage() {
-  // The real enforcement: ADMIN only. Middleware already redirected anyone
-  // else before this ran, but this check is what actually protects the data
-  // below — never trust the middleware alone.
-  const session = await requireRoleForPage(["ADMIN"]);
-  const stats = await getStats();
+export const dynamic = "force-dynamic";
+
+export default async function AdminDashboardPage() {
+  await requireAdmin();
+  const stats = await getDashboardStats();
 
   const cards = [
-    { label: "Users", value: stats.userCount },
-    { label: "Clients", value: stats.clientCount },
-    { label: "Leads", value: stats.leadCount },
-    { label: "Projects", value: stats.projectCount },
-    { label: "Tasks", value: stats.taskCount },
+    { label: "Total Leads", value: stats.totalLeads, icon: UserPlus, href: "/admin/leads" },
+    { label: "New Leads", value: stats.newLeads, icon: BadgeCheck, href: "/admin/leads?status=NEW" },
+    { label: "Qualified Leads", value: stats.qualifiedLeads, icon: Sparkles, href: "/admin/leads?status=QUALIFIED" },
+    { label: "Active Clients", value: stats.activeClients, icon: Users2, href: "/admin/clients" },
+    { label: "Active Projects", value: stats.activeProjects, icon: FolderKanban, href: "/admin/projects" },
+    { label: "Open Tasks", value: stats.openTasks, icon: CheckSquare, href: "/admin/tasks" },
+    {
+      label: "Overdue Tasks",
+      value: stats.overdueTasks,
+      icon: AlertTriangle,
+      href: "/admin/tasks",
+      tone: "warning" as const,
+    },
+    {
+      label: "Automation Failures",
+      value: stats.automationFailures,
+      icon: Workflow,
+      href: "/admin/automations?status=FAILED",
+      tone: "warning" as const,
+    },
   ];
 
   return (
-    <main className="min-h-screen py-12">
-      <Container size="wide">
-        <DashboardHeader title="Admin Dashboard" userName={session.name} userRole={session.role} />
+    <div>
+      <h1 className="text-2xl font-bold text-slate-100">Dashboard</h1>
+      <p className="mt-1 text-sm text-slate-400">Live platform overview.</p>
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-          {cards.map((c) => (
-            <Card key={c.label}>
-              <p className="text-sm text-slate-400">{c.label}</p>
-              <p className="mt-1 text-3xl font-bold text-slate-100">{c.value}</p>
-            </Card>
-          ))}
-        </div>
-
-        <p className="mt-8 text-xs text-slate-600">
-          Full lead/client/project management modules land in later phases. This
-          confirms the admin route is protected and reading real platform data.
-        </p>
-      </Container>
-    </main>
+      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
+        {cards.map((c) => (
+          <StatCard key={c.label} {...c} />
+        ))}
+      </div>
+    </div>
   );
 }

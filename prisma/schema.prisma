@@ -179,6 +179,7 @@ model User {
   notifications      Notification[]
   auditLogs          AuditLog[]
   verificationTokens VerificationToken[]
+  leadNotes          LeadNote[]
 
   @@index([role])
   @@index([status])
@@ -286,11 +287,34 @@ model Lead {
   // A lead can optionally result directly in a project.
   convertedProject Project? @relation("LeadProject")
 
+  notes LeadNote[]
+
   @@index([status])
   @@index([email])
   @@index([assignedToId])
   @@index([clientId])
   @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// LeadNote — internal notes staff add while working a lead
+// ---------------------------------------------------------------------------
+
+model LeadNote {
+  id     String @id @default(uuid())
+  leadId String
+  lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  // Nullable + SetNull: a note must survive its author's account being
+  // removed, the same reasoning as AuditLog.userId.
+  authorId String?
+  author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  body String
+
+  createdAt DateTime @default(now())
+
+  @@index([leadId, createdAt])
 }
 
 // ---------------------------------------------------------------------------
