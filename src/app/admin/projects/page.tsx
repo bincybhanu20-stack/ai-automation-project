@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { FolderKanban } from "lucide-react";
-import { requireAdmin } from "@/lib/admin-guard";
+import Link from "next/link";
+import { FolderKanban, Plus } from "lucide-react";
+import { requireProjectStaff } from "@/lib/admin-guard";
 import { getProjects } from "@/lib/services/admin/projects";
 import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/Table";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -10,7 +11,7 @@ import { FormField } from "@/components/ui/FormField";
 import { Button } from "@/components/ui/Button";
 
 export async function generateMetadata(): Promise<Metadata> {
-  await requireAdmin();
+  await requireProjectStaff();
   return { title: "Projects" };
 }
 
@@ -21,15 +22,32 @@ export default async function AdminProjectsPage({
 }: {
   searchParams: { q?: string; page?: string };
 }) {
-  await requireAdmin();
+  // Open to ADMIN and PROJECT_MANAGER (see src/lib/roles.ts's /admin/projects
+  // carve-out and src/lib/admin-guard.ts's requireProjectStaff). Everyone
+  // who reaches this list can SEE every project — internal staff visibility
+  // is intentionally broad, per the same principle requireClientAccess()
+  // already documents. Which projects a PROJECT_MANAGER can actually EDIT
+  // is the separate, narrower check on the detail page.
+  await requireProjectStaff();
   const q = searchParams.q?.trim() || undefined;
   const page = searchParams.page ? Number(searchParams.page) : 1;
   const { projects, total, totalPages } = await getProjects({ q, page });
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-slate-100">Projects</h1>
-      <p className="mt-1 text-sm text-slate-400">{total} total</p>
+      <div className="mb-6 flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-100">Projects</h1>
+          <p className="mt-1 text-sm text-slate-400">{total} total</p>
+        </div>
+        <Link
+          href="/admin/projects/new"
+          className="gradient-button inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-white"
+        >
+          <Plus className="h-4 w-4" aria-hidden="true" />
+          New Project
+        </Link>
+      </div>
 
       <form method="get" className="my-6 flex max-w-sm gap-2">
         <FormField id="q" name="q" label="Search" placeholder="Search by title" defaultValue={q} className="flex-1" />
@@ -42,7 +60,7 @@ export default async function AdminProjectsPage({
         <EmptyState
           icon={FolderKanban}
           title={q ? "No projects match that search" : "No projects yet"}
-          description={q ? undefined : "Projects are created from a converted lead or an existing client."}
+          description={q ? undefined : "Create your first project, or create one from a qualified lead."}
         />
       ) : (
         <>
@@ -61,7 +79,11 @@ export default async function AdminProjectsPage({
             <Tbody>
               {projects.map((project) => (
                 <Tr key={project.id}>
-                  <Td className="font-medium text-slate-100">{project.title}</Td>
+                  <Td className="font-medium text-slate-100">
+                    <Link href={`/admin/projects/${project.id}`} className="hover:text-sky-400">
+                      {project.title}
+                    </Link>
+                  </Td>
                   <Td>{project.client.companyName}</Td>
                   <Td>
                     <StatusBadge value={project.status} />
@@ -69,7 +91,7 @@ export default async function AdminProjectsPage({
                   <Td>
                     <StatusBadge value={project.priority} />
                   </Td>
-                  <Td>{project.progress}%</Td>
+                  <Td>{project.computedProgress}%</Td>
                   <Td>{project.manager?.name ?? <span className="text-slate-600">Unassigned</span>}</Td>
                   <Td>{project._count.tasks}</Td>
                 </Tr>
@@ -83,12 +105,6 @@ export default async function AdminProjectsPage({
           />
         </>
       )}
-
-      <p className="mt-6 text-xs text-slate-600">
-        Full project management (create/edit/task boards) is a dedicated module.
-        This confirms the route is admin-protected and reads real project data —
-        creating a project from a lead already works on the lead detail page.
-      </p>
     </div>
   );
 }

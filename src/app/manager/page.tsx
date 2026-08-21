@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { Container } from "@/components/ui/Container";
 import { Card } from "@/components/ui/Card";
 import { DashboardHeader } from "@/components/layout/DashboardHeader";
@@ -35,10 +37,20 @@ export default async function ManagerPage() {
           </Card>
         </div>
 
+        {session.role === "PROJECT_MANAGER" && (
+          <Link
+            href="/admin/projects"
+            className="gradient-button mt-6 inline-flex items-center gap-1.5 rounded-lg px-5 py-2.5 text-sm font-medium text-white"
+          >
+            Manage Projects
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
+        )}
+
         <p className="mt-8 text-xs text-slate-600">
-          Full project and task management modules land in later phases. This
-          confirms the staff route is protected for ADMIN, PROJECT_MANAGER and
-          TEAM_MEMBER, and blocked for CLIENT.
+          Full task management is a dedicated future module. This confirms the
+          staff route is protected for ADMIN, PROJECT_MANAGER and TEAM_MEMBER,
+          and blocked for CLIENT.
         </p>
       </Container>
     </main>

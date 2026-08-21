@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { logAuditEvent } from "@/lib/audit";
 import { qualifyLeadAI } from "@/lib/ai";
+import { triggerN8nWebhook } from "@/lib/n8n";
 import type { LeadStatus, Prisma, Role } from "@prisma/client";
 import type {
   EditLeadInput,
@@ -325,6 +326,23 @@ export async function createProjectFromLead(
     entity: "Project",
     entityId: project.id,
     metadata: { leadId: lead.id, clientId },
+  });
+
+  // Same PROJECT_CREATED event as the standalone creation path
+  // (src/lib/services/admin/projects.ts) — "when a project is created
+  // successfully" applies here too, not just to projects created directly.
+  await triggerN8nWebhook({
+    eventType: "PROJECT_CREATED",
+    entityType: "Project",
+    entityId: project.id,
+    payload: {
+      projectId: project.id,
+      title: project.title,
+      clientId: project.clientId,
+      managerId: project.managerId,
+      status: project.status,
+      originatingLeadId: lead.id,
+    },
   });
 
   return { success: true };

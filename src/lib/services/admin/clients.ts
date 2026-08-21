@@ -21,3 +21,12 @@ export async function getClients(params: { q?: string; page?: number }) {
 
   return { clients, total, page, totalPages: Math.max(1, Math.ceil(total / CLIENTS_PAGE_SIZE)) };
 }
+
+/** Simple list for a client picker (e.g. assigning/reassigning a project). */
+export async function getClientOptions() {
+  return prisma.client.findMany({
+    where: { status: "ACTIVE" },
+    select: { id: true, companyName: true },
+    orderBy: { companyName: "asc" },
+  });
+}

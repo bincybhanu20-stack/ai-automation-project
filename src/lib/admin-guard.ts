@@ -26,3 +26,16 @@ import type { AuthSession } from "./auth";
 export const requireAdmin = cache(async (): Promise<AuthSession> => {
   return requireRoleForPage(["ADMIN"]);
 });
+
+/**
+ * For the project management pages specifically (/admin/projects/*), which
+ * — unlike every other /admin/* page — are also open to PROJECT_MANAGER,
+ * matching the middleware carve-out in src/lib/roles.ts. This only confirms
+ * "is this session staff with project access at all" (a page-level gate);
+ * WHICH specific projects a PROJECT_MANAGER may edit is a separate, finer
+ * check done by requireProjectManagementAccess() (src/lib/authorization.ts)
+ * on every mutation.
+ */
+export const requireProjectStaff = cache(async (): Promise<AuthSession> => {
+  return requireRoleForPage(["ADMIN", "PROJECT_MANAGER"]);
+});

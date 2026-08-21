@@ -30,6 +30,15 @@ export function roleHomePath(role: Role): string {
  * inside every protected page and route handler.
  */
 export const ROUTE_ROLE_MAP: Array<{ prefix: string; roles: Role[] }> = [
+  // More specific rule listed BEFORE the general "/admin" rule — middleware
+  // matches with .find(), which takes the first match, so this carve-out
+  // wins for /admin/projects* without opening up the rest of /admin/* (leads,
+  // audit logs, settings, etc.) to PROJECT_MANAGER. Project management is
+  // the one admin module project managers are authorized to reach; the
+  // per-project "are they actually authorized for THIS project" check still
+  // happens server-side in requireProjectManagementAccess() (src/lib/
+  // authorization.ts) — this only gets a PM as far as the route.
+  { prefix: "/admin/projects", roles: ["ADMIN", "PROJECT_MANAGER"] },
   { prefix: "/admin", roles: ["ADMIN"] },
   { prefix: "/manager", roles: ["ADMIN", "PROJECT_MANAGER", "TEAM_MEMBER"] },
   { prefix: "/client", roles: ["CLIENT"] },

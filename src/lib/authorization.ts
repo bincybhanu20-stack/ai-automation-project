@@ -1,5 +1,5 @@
 import { prisma } from "./prisma";
-import { requireAuth, type AuthSession } from "./auth";
+import { requireAuth, requireRole, type AuthSession } from "./auth";
 import type { Project } from "@prisma/client";
 
 /**
@@ -72,5 +72,61 @@ export async function requireProjectAccess(
   }
 
   const session = await requireClientAccess(project.clientId);
+  return { session, project };
+}
+
+/**
+ * Can this session MANAGE (create/edit/reassign/change status of) the given
+ * project — as opposed to merely VIEW it (that's requireProjectAccess above,
+ * used by the client portal and by any staff member browsing project info).
+ *
+ * - ADMIN: always. Full authority over every project.
+ * - PROJECT_MANAGER: only if they are ALREADY this project's manager, or the
+ *   project has no manager yet (so someone can claim it). This is the
+ *   "authorized project managers" distinction from an unrestricted "any PM
+ *   can edit any project" rule — deliberately narrower, and closes a gap
+ *   this file's own comment flagged as deferred when requireClientAccess()
+ *   was first written ("restricting staff to only their assigned projects
+ *   is a finer-grained rule that belongs to the Projects module").
+ * - TEAM_MEMBER / CLIENT: never. Task-level work only, not project
+ *   management, and clients never modify project ownership or structure.
+ *
+ * Pure and synchronous on purpose — no database call, no throwing. Callers
+ * that already have a project loaded (e.g. mid-page-render) can check
+ * without a second round trip. requireProjectManagementAccess() below is
+ * the version that loads the project itself and throws on failure.
+ */
+export function canManageProject(session: AuthSession, project: Pick<Project, "managerId">): boolean {
+  if (session.role === "ADMIN") return true;
+  if (session.role === "PROJECT_MANAGER") {
+    return project.managerId === null || project.managerId === session.userId;
+  }
+  return false;
+}
+
+/**
+ * Loads the project and enforces canManageProject() above. Use this at the
+ * top of every project-management server action (update, assign manager,
+ * assign client, change status) — independently of whatever page rendered
+ * the button that called it, per this platform's standing rule that every
+ * mutation re-checks authorization itself.
+ *
+ * Throws "NOT_FOUND" if the project doesn't exist, "FORBIDDEN" if it exists
+ * but this session isn't authorized to manage it.
+ */
+export async function requireProjectManagementAccess(
+  projectId: string
+): Promise<{ session: AuthSession; project: Project }> {
+  const session = await requireRole(["ADMIN", "PROJECT_MANAGER"]);
+
+  const project = await prisma.project.findUnique({ where: { id: projectId } });
+  if (!project) {
+    throw new Error("NOT_FOUND");
+  }
+
+  if (!canManageProject(session, project)) {
+    throw new Error("FORBIDDEN");
+  }
+
   return { session, project };
 }

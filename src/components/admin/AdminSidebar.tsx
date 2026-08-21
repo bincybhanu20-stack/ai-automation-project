@@ -18,28 +18,39 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { Role } from "@prisma/client";
 
 const NAV_ITEMS = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/admin/leads", label: "Leads", icon: UserPlus },
-  { href: "/admin/clients", label: "Clients", icon: Users2 },
-  { href: "/admin/projects", label: "Projects", icon: FolderKanban },
-  { href: "/admin/tasks", label: "Tasks", icon: CheckSquare },
-  { href: "/admin/notifications", label: "Notifications", icon: Bell },
-  { href: "/admin/reports", label: "Reports", icon: BarChart3 },
-  { href: "/admin/automations", label: "Automations", icon: Workflow },
-  { href: "/admin/audit-logs", label: "Audit Logs", icon: ScrollText },
-  { href: "/admin/settings", label: "Settings", icon: Settings },
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true, roles: ["ADMIN"] as Role[] },
+  { href: "/admin/leads", label: "Leads", icon: UserPlus, roles: ["ADMIN"] as Role[] },
+  { href: "/admin/clients", label: "Clients", icon: Users2, roles: ["ADMIN"] as Role[] },
+  // The one item PROJECT_MANAGER can also reach — matches the /admin/projects
+  // carve-out in src/lib/roles.ts's ROUTE_ROLE_MAP.
+  { href: "/admin/projects", label: "Projects", icon: FolderKanban, roles: ["ADMIN", "PROJECT_MANAGER"] as Role[] },
+  { href: "/admin/tasks", label: "Tasks", icon: CheckSquare, roles: ["ADMIN"] as Role[] },
+  { href: "/admin/notifications", label: "Notifications", icon: Bell, roles: ["ADMIN"] as Role[] },
+  { href: "/admin/reports", label: "Reports", icon: BarChart3, roles: ["ADMIN"] as Role[] },
+  { href: "/admin/automations", label: "Automations", icon: Workflow, roles: ["ADMIN"] as Role[] },
+  { href: "/admin/audit-logs", label: "Audit Logs", icon: ScrollText, roles: ["ADMIN"] as Role[] },
+  { href: "/admin/settings", label: "Settings", icon: Settings, roles: ["ADMIN"] as Role[] },
 ];
 
 function isActive(pathname: string, href: string, exact?: boolean) {
   return exact ? pathname === href : pathname === href || pathname.startsWith(href + "/");
 }
 
-function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () => void }) {
+function NavLinks({
+  pathname,
+  items,
+  onNavigate,
+}: {
+  pathname: string;
+  items: typeof NAV_ITEMS;
+  onNavigate?: () => void;
+}) {
   return (
     <nav className="flex flex-col gap-0.5" aria-label="Admin">
-      {NAV_ITEMS.map((item) => {
+      {items.map((item) => {
         const active = isActive(pathname, item.href, item.exact);
         return (
           <Link
@@ -63,23 +74,34 @@ function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () 
   );
 }
 
-export function AdminSidebar() {
+/**
+ * Every /admin/* page independently re-checks its own access (that's the
+ * real security boundary — see admin-guard.ts) — this filtering is purely a
+ * UX improvement so a PROJECT_MANAGER who can only reach /admin/projects
+ * doesn't see nine other links that would just bounce them to
+ * /unauthorized. Filtering happens by ROLE only, never by anything the
+ * client could tamper with (this is a session prop passed from a server
+ * component that already read it from the signed cookie).
+ */
+export function AdminSidebar({ role }: { role?: Role }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const items = role ? NAV_ITEMS.filter((item) => item.roles.includes(role)) : NAV_ITEMS;
+  const homeHref = role === "PROJECT_MANAGER" ? "/admin/projects" : "/admin";
 
   return (
     <>
       {/* Desktop sidebar */}
       <aside className="hidden w-60 shrink-0 border-r border-white/5 px-3 py-6 lg:block">
-        <Link href="/admin" className="gradient-text mb-6 block px-3 text-lg font-bold">
+        <Link href={homeHref} className="gradient-text mb-6 block px-3 text-lg font-bold">
           ClientFlow
         </Link>
-        <NavLinks pathname={pathname} />
+        <NavLinks pathname={pathname} items={items} />
       </aside>
 
       {/* Mobile top bar + toggle */}
       <div className="flex items-center justify-between border-b border-white/5 px-4 py-3 lg:hidden">
-        <Link href="/admin" className="gradient-text text-lg font-bold">
+        <Link href={homeHref} className="gradient-text text-lg font-bold">
           ClientFlow
         </Link>
         <button
@@ -95,7 +117,7 @@ export function AdminSidebar() {
       </div>
       {mobileOpen && (
         <div id="admin-mobile-nav" className="border-b border-white/5 px-3 py-3 lg:hidden">
-          <NavLinks pathname={pathname} onNavigate={() => setMobileOpen(false)} />
+          <NavLinks pathname={pathname} items={items} onNavigate={() => setMobileOpen(false)} />
         </div>
       )}
     </>

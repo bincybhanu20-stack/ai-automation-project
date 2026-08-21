@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { computeProjectProgress } from "@/lib/services/project-progress";
 
 const UPCOMING_DEADLINE_WINDOW_DAYS = 14;
 const RECENT_ACTIVITY_LIMIT = 8;
@@ -54,6 +55,28 @@ export async function getClientDashboardData(userId: string) {
   }
 
   const projectIds = client.projects.map((p) => p.id);
+
+  // Same "progress from completed tasks" rule as the admin dashboard
+  // (src/lib/services/project-progress.ts) — a client must never see a
+  // different percentage than staff sees for the identical project.
+  const completedCounts = projectIds.length
+    ? await prisma.task.groupBy({
+        by: ["projectId"],
+        where: { projectId: { in: projectIds }, status: "COMPLETED" },
+        _count: true,
+      })
+    : [];
+  const completedMap = new Map(completedCounts.map((c) => [c.projectId, c._count]));
+
+  const projectsWithProgress = client.projects.map((p) => ({
+    ...p,
+    progress: computeProjectProgress(p.progress, {
+      total: p._count.tasks,
+      completed: completedMap.get(p.id) ?? 0,
+    }),
+  }));
+  client.projects = projectsWithProgress;
+
   const activeProjects = client.projects.filter((p) => p.status === "ACTIVE");
 
   const now = new Date();

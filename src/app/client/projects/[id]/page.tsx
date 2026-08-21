@@ -25,7 +25,10 @@ export const dynamic = "force-dynamic";
 
 export default async function ClientProjectDetailPage({ params }: { params: { id: string } }) {
   const { project } = await requireProjectAccessForPage(params.id);
-  const { milestones, taskSummary, messages, recentUpdates } = await getClientProjectExtras(project.id);
+  const { milestones, taskSummary, messages, recentUpdates, computedProgress } = await getClientProjectExtras(
+    project.id,
+    project.progress
+  );
 
   return (
     <div className="space-y-6">
@@ -45,9 +48,9 @@ export default async function ClientProjectDetailPage({ params }: { params: { id
       <Card>
         <div className="mb-4 flex items-center justify-between">
           <span className="text-sm text-slate-400">Progress</span>
-          <span className="text-sm font-medium text-slate-200">{project.progress}%</span>
+          <span className="text-sm font-medium text-slate-200">{computedProgress}%</span>
         </div>
-        <ProgressBar value={project.progress} />
+        <ProgressBar value={computedProgress} />
         <dl className="mt-6 grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
           <div>
             <dt className="text-xs uppercase tracking-wider text-slate-500">Start date</dt>
