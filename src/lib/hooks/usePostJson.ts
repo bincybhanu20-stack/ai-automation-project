@@ -11,10 +11,15 @@ import { useState } from "react";
 export function usePostJson<TResponse = unknown>() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Field-level errors, e.g. { email: "Enter a valid email address" }.
+  // Most callers (login, forgot-password) never set this — only forms with
+  // per-field server validation (the lead capture form) read it.
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   async function post(url: string, body: unknown): Promise<TResponse | null> {
     setLoading(true);
     setError(null);
+    setFieldErrors({});
     try {
       const res = await fetch(url, {
         method: "POST",
@@ -23,7 +28,9 @@ export function usePostJson<TResponse = unknown>() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError((data as { error?: string }).error || "Something went wrong. Please try again.");
+        const responseBody = data as { error?: string; fieldErrors?: Record<string, string> };
+        setError(responseBody.error || "Something went wrong. Please try again.");
+        if (responseBody.fieldErrors) setFieldErrors(responseBody.fieldErrors);
         return null;
       }
       return data as TResponse;
@@ -35,5 +42,5 @@ export function usePostJson<TResponse = unknown>() {
     }
   }
 
-  return { post, loading, error, setError };
+  return { post, loading, error, setError, fieldErrors };
 }
