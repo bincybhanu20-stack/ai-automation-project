@@ -10,10 +10,11 @@ import "./globals.css";
  */
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
   title: {
-    default: "ClientFlow — Client Management & AI Automation",
+    default: "Elicpesoftware — Client Management & AI Automation",
     // Child pages set their own title and it slots in here automatically.
-    template: "%s | ClientFlow",
+    template: "%s | Elicpesoftware",
   },
   description:
     "Manage leads, clients, projects and tasks with AI-assisted qualification and n8n automation.",

@@ -3,12 +3,12 @@ import Link from "next/link";
 import { FolderKanban, Plus } from "lucide-react";
 import { requireProjectStaff } from "@/lib/admin-guard";
 import { getProjects } from "@/lib/services/admin/projects";
-import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/Table";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { Pagination } from "@/components/ui/Pagination";
-import { FormField } from "@/components/ui/FormField";
-import { Button } from "@/components/ui/Button";
+import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/admin/ui/Table";
+import { StatusBadge } from "@/components/admin/ui/StatusBadge";
+import { EmptyState } from "@/components/admin/ui/EmptyState";
+import { Pagination } from "@/components/admin/ui/Pagination";
+import { FormField } from "@/components/admin/ui/FormField";
+import { Button } from "@/components/admin/ui/Button";
 
 export async function generateMetadata(): Promise<Metadata> {
   await requireProjectStaff();
@@ -37,12 +37,12 @@ export default async function AdminProjectsPage({
     <div>
       <div className="mb-6 flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">Projects</h1>
-          <p className="mt-1 text-sm text-slate-400">{total} total</p>
+          <h1 className="text-2xl font-bold text-charcoal-dark">Projects</h1>
+          <p className="mt-1 text-sm text-charcoal-muted">{total} total</p>
         </div>
         <Link
           href="/admin/projects/new"
-          className="gradient-button inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-white"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-crimson px-4 py-2 text-sm font-medium text-white hover:bg-crimson-hover"
         >
           <Plus className="h-4 w-4" aria-hidden="true" />
           New Project
@@ -79,8 +79,8 @@ export default async function AdminProjectsPage({
             <Tbody>
               {projects.map((project) => (
                 <Tr key={project.id}>
-                  <Td className="font-medium text-slate-100">
-                    <Link href={`/admin/projects/${project.id}`} className="hover:text-sky-400">
+                  <Td className="font-medium text-charcoal-dark">
+                    <Link href={`/admin/projects/${project.id}`} className="hover:text-violet-600">
                       {project.title}
                     </Link>
                   </Td>
@@ -92,7 +92,7 @@ export default async function AdminProjectsPage({
                     <StatusBadge value={project.priority} />
                   </Td>
                   <Td>{project.computedProgress}%</Td>
-                  <Td>{project.manager?.name ?? <span className="text-slate-600">Unassigned</span>}</Td>
+                  <Td>{project.manager?.name ?? <span className="text-charcoal-muted">Unassigned</span>}</Td>
                   <Td>{project._count.tasks}</Td>
                 </Tr>
               ))}

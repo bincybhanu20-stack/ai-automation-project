@@ -3,11 +3,11 @@ import Link from "next/link";
 import { FolderKanban, CheckSquare, CalendarClock, Bell } from "lucide-react";
 import { requireClient } from "@/lib/client-guard";
 import { getClientDashboardData } from "@/lib/services/client/dashboard";
-import { Card, CardHeader } from "@/components/ui/Card";
-import { StatCard } from "@/components/ui/StatCard";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { ProgressBar } from "@/components/ui/ProgressBar";
+import { Card, CardHeader } from "@/components/admin/ui/Card";
+import { StatCard } from "@/components/admin/ui/StatCard";
+import { StatusBadge } from "@/components/admin/ui/StatusBadge";
+import { EmptyState } from "@/components/admin/ui/EmptyState";
+import { ProgressBar } from "@/components/admin/ui/ProgressBar";
 import { NotificationMarkReadButton } from "@/components/client/NotificationMarkReadButton";
 import { formatDate } from "@/lib/utils";
 
@@ -28,7 +28,7 @@ export default async function ClientDashboardPage() {
     // this account can't have projects at all until IT support links one.
     return (
       <Card>
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-charcoal-muted">
           No client profile is linked to your account yet. Contact your account
           manager to get set up.
         </p>
@@ -42,17 +42,17 @@ export default async function ClientDashboardPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-slate-100">Welcome back, {session.name.split(" ")[0]}</h1>
-        <p className="mt-1 text-sm text-slate-400">
+        <h1 className="text-2xl font-bold text-charcoal-dark">Welcome back, {session.name.split(" ")[0]}</h1>
+        <p className="mt-1 text-sm text-charcoal-muted">
           {client.companyName}
           {client.industry && ` · ${client.industry}`}
         </p>
       </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatCard label="Active projects" value={activeProjects.length} icon={FolderKanban} />
-        <StatCard label="Open tasks" value={openTasksCount} icon={CheckSquare} />
-        <StatCard label="Upcoming deadlines" value={upcomingDeadlines.length} icon={CalendarClock} />
+        <StatCard label="Active projects" value={activeProjects.length} icon={FolderKanban} accent="violet" />
+        <StatCard label="Open tasks" value={openTasksCount} icon={CheckSquare} accent="amber" />
+        <StatCard label="Upcoming deadlines" value={upcomingDeadlines.length} icon={CalendarClock} accent="rose" />
         <StatCard label="Unread notifications" value={unreadCount} icon={Bell} tone="warning" />
       </div>
 
@@ -73,14 +73,14 @@ export default async function ClientDashboardPage() {
                   <Link
                     key={project.id}
                     href={`/client/projects/${project.id}`}
-                    className="block rounded-lg border border-white/5 p-4 hover:border-white/10 hover:bg-white/[0.02]"
+                    className="block rounded-lg border border-hairline p-4 transition-colors hover:border-crimson/30 hover:bg-surface"
                   >
                     <div className="mb-2 flex items-center justify-between gap-2">
-                      <p className="font-medium text-slate-100">{project.title}</p>
+                      <p className="font-medium text-charcoal-dark">{project.title}</p>
                       <StatusBadge value={project.status} />
                     </div>
                     <ProgressBar value={project.progress} />
-                    <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
+                    <div className="mt-2 flex items-center justify-between text-xs text-charcoal-muted">
                       <span>{project.progress}% complete</span>
                       <span>{project._count.tasks} task{project._count.tasks === 1 ? "" : "s"}</span>
                     </div>
@@ -96,15 +96,15 @@ export default async function ClientDashboardPage() {
           <Card>
             <CardHeader title="Upcoming deadlines" />
             {upcomingDeadlines.length === 0 ? (
-              <p className="text-sm text-slate-500">Nothing due in the next two weeks.</p>
+              <p className="text-sm text-charcoal-muted">Nothing due in the next two weeks.</p>
             ) : (
               <ul className="space-y-3">
                 {upcomingDeadlines.map((d) => (
                   <li key={`${d.kind}-${d.id}`} className="text-sm">
-                    <Link href={`/client/projects/${d.projectId}`} className="text-slate-200 hover:text-sky-400">
+                    <Link href={`/client/projects/${d.projectId}`} className="text-charcoal-dark hover:text-crimson">
                       {d.title}
                     </Link>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-charcoal-muted">
                       {d.kind === "project" ? "Project deadline" : `Task · ${d.projectTitle}`} ·{" "}
                       {formatDate(d.dueDate)}
                     </p>
@@ -117,14 +117,14 @@ export default async function ClientDashboardPage() {
           <Card>
             <CardHeader title="Notifications" />
             {recentNotifications.length === 0 ? (
-              <p className="text-sm text-slate-500">No notifications yet.</p>
+              <p className="text-sm text-charcoal-muted">No notifications yet.</p>
             ) : (
               <ul className="space-y-3">
                 {recentNotifications.map((n) => (
                   <li key={n.id} className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="text-sm text-slate-200">{n.title}</p>
-                      <p className="text-xs text-slate-500">{formatDate(n.createdAt)}</p>
+                      <p className="text-sm text-charcoal-dark">{n.title}</p>
+                      <p className="text-xs text-charcoal-muted">{formatDate(n.createdAt)}</p>
                     </div>
                     {!n.isRead && <NotificationMarkReadButton notificationId={n.id} />}
                   </li>
@@ -146,26 +146,26 @@ export default async function ClientDashboardPage() {
               <li key={`${item.kind}-${item.id}`} className="flex items-center justify-between gap-4 text-sm">
                 <div>
                   {item.kind === "task" && (
-                    <p className="text-slate-300">
-                      Task <span className="text-slate-100">{item.title}</span> in{" "}
-                      <Link href={`/client/projects/${item.projectId}`} className="text-sky-400 hover:text-sky-300">
+                    <p className="text-charcoal">
+                      Task <span className="text-charcoal-dark">{item.title}</span> in{" "}
+                      <Link href={`/client/projects/${item.projectId}`} className="text-crimson hover:text-crimson-hover">
                         {item.projectTitle}
                       </Link>{" "}
                       is now <StatusBadge value={item.status} />
                     </p>
                   )}
                   {item.kind === "project" && (
-                    <p className="text-slate-300">
+                    <p className="text-charcoal">
                       Project{" "}
-                      <Link href={`/client/projects/${item.id}`} className="text-sky-400 hover:text-sky-300">
+                      <Link href={`/client/projects/${item.id}`} className="text-crimson hover:text-crimson-hover">
                         {item.title}
                       </Link>{" "}
                       is now <StatusBadge value={item.status} />
                     </p>
                   )}
-                  {item.kind === "notification" && <p className="text-slate-300">{item.title}</p>}
+                  {item.kind === "notification" && <p className="text-charcoal">{item.title}</p>}
                 </div>
-                <span className="shrink-0 text-xs text-slate-600">{formatDate(item.at)}</span>
+                <span className="shrink-0 text-xs text-charcoal-muted">{formatDate(item.at)}</span>
               </li>
             ))}
           </ul>

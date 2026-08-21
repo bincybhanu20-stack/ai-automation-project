@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
-import { CheckSquare } from "lucide-react";
+import Link from "next/link";
+import { CheckSquare, Plus } from "lucide-react";
 import { requireAdmin } from "@/lib/admin-guard";
 import { getTasks } from "@/lib/services/admin/tasks";
-import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/Table";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { Pagination } from "@/components/ui/Pagination";
-import { FormField } from "@/components/ui/FormField";
-import { Button } from "@/components/ui/Button";
+import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/admin/ui/Table";
+import { StatusBadge } from "@/components/admin/ui/StatusBadge";
+import { EmptyState } from "@/components/admin/ui/EmptyState";
+import { Pagination } from "@/components/admin/ui/Pagination";
+import { FormField } from "@/components/admin/ui/FormField";
+import { Button } from "@/components/admin/ui/Button";
+import { DeleteTaskButton } from "@/components/admin/tasks/DeleteTaskButton";
 import { formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
@@ -31,10 +33,20 @@ export default async function AdminTasksPage({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-slate-100">Tasks</h1>
-      <p className="mt-1 text-sm text-slate-400">{total} total</p>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-charcoal-dark">Tasks</h1>
+          <p className="mt-1 text-sm text-charcoal-muted">{total} total</p>
+        </div>
+        <Link href="/admin/tasks/new">
+          <Button size="sm">
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            Add Task
+          </Button>
+        </Link>
+      </div>
 
-      <form method="get" className="my-6 flex max-w-sm gap-2">
+      <form method="get" className="mb-6 flex max-w-sm gap-2">
         <FormField id="q" name="q" label="Search" placeholder="Search by title" defaultValue={q} className="flex-1" />
         <Button type="submit" size="sm" className="self-end">
           Search
@@ -58,6 +70,7 @@ export default async function AdminTasksPage({
                 <Th>Status</Th>
                 <Th>Priority</Th>
                 <Th>Due date</Th>
+                <Th>Actions</Th>
               </tr>
             </Thead>
             <Tbody>
@@ -65,18 +78,32 @@ export default async function AdminTasksPage({
                 const overdue = task.status !== "COMPLETED" && task.dueDate && task.dueDate < now;
                 return (
                   <Tr key={task.id}>
-                    <Td className="font-medium text-slate-100">{task.title}</Td>
+                    <Td className="font-medium text-charcoal-dark">
+                      <Link href={`/admin/tasks/${task.id}`} className="hover:text-amber-600">
+                        {task.title}
+                      </Link>
+                    </Td>
                     <Td>{task.project.title}</Td>
-                    <Td>{task.assignee?.name ?? <span className="text-slate-600">Unassigned</span>}</Td>
+                    <Td>{task.assignee?.name ?? <span className="text-charcoal-muted">Unassigned</span>}</Td>
                     <Td>
                       <StatusBadge value={task.status} />
                     </Td>
                     <Td>
                       <StatusBadge value={task.priority} />
                     </Td>
-                    <Td className={cn(overdue && "font-medium text-red-400")}>
+                    <Td className={cn(overdue && "font-medium text-red-600")}>
                       {task.dueDate ? formatDate(task.dueDate) : "—"}
                       {overdue && " (overdue)"}
+                    </Td>
+                    <Td>
+                      <div className="flex items-center gap-2">
+                        <Link href={`/admin/tasks/${task.id}`}>
+                          <Button size="sm" variant="ghost">
+                            Edit
+                          </Button>
+                        </Link>
+                        <DeleteTaskButton taskId={task.id} taskTitle={task.title} />
+                      </div>
                     </Td>
                   </Tr>
                 );

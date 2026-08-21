@@ -3,10 +3,10 @@ import Link from "next/link";
 import { ArrowLeft, CheckCircle2, Circle } from "lucide-react";
 import { requireProjectAccessForPage } from "@/lib/page-guards";
 import { getClientProjectExtras } from "@/lib/services/client/projects";
-import { Card, CardHeader } from "@/components/ui/Card";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { ProgressBar } from "@/components/ui/ProgressBar";
-import { EmptyState } from "@/components/ui/EmptyState";
+import { Card, CardHeader } from "@/components/admin/ui/Card";
+import { StatusBadge } from "@/components/admin/ui/StatusBadge";
+import { ProgressBar } from "@/components/admin/ui/ProgressBar";
+import { EmptyState } from "@/components/admin/ui/EmptyState";
 import { ProjectMessageForm } from "@/components/client/ProjectMessageForm";
 import { formatDate, cn } from "@/lib/utils";
 
@@ -32,33 +32,33 @@ export default async function ClientProjectDetailPage({ params }: { params: { id
 
   return (
     <div className="space-y-6">
-      <Link href="/client" className="inline-flex items-center gap-1.5 text-sm text-sky-400 hover:text-sky-300">
+      <Link href="/client" className="inline-flex items-center gap-1.5 text-sm text-crimson hover:text-crimson-hover">
         <ArrowLeft className="h-4 w-4" aria-hidden="true" />
         Back to dashboard
       </Link>
 
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">{project.title}</h1>
-          {project.description && <p className="mt-1 max-w-2xl text-sm text-slate-400">{project.description}</p>}
+          <h1 className="text-2xl font-bold text-charcoal-dark">{project.title}</h1>
+          {project.description && <p className="mt-1 max-w-2xl text-sm text-charcoal-muted">{project.description}</p>}
         </div>
         <StatusBadge value={project.status} />
       </div>
 
       <Card>
         <div className="mb-4 flex items-center justify-between">
-          <span className="text-sm text-slate-400">Progress</span>
-          <span className="text-sm font-medium text-slate-200">{computedProgress}%</span>
+          <span className="text-sm text-charcoal-muted">Progress</span>
+          <span className="text-sm font-medium text-charcoal-dark">{computedProgress}%</span>
         </div>
         <ProgressBar value={computedProgress} />
         <dl className="mt-6 grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
           <div>
-            <dt className="text-xs uppercase tracking-wider text-slate-500">Start date</dt>
-            <dd className="mt-1 text-slate-200">{formatDate(project.startDate)}</dd>
+            <dt className="text-xs uppercase tracking-wider text-charcoal-muted">Start date</dt>
+            <dd className="mt-1 text-charcoal-dark">{formatDate(project.startDate)}</dd>
           </div>
           <div>
-            <dt className="text-xs uppercase tracking-wider text-slate-500">Due date</dt>
-            <dd className="mt-1 text-slate-200">{formatDate(project.deadline)}</dd>
+            <dt className="text-xs uppercase tracking-wider text-charcoal-muted">Due date</dt>
+            <dd className="mt-1 text-charcoal-dark">{formatDate(project.deadline)}</dd>
           </div>
         </dl>
       </Card>
@@ -74,15 +74,15 @@ export default async function ClientProjectDetailPage({ params }: { params: { id
               {milestones.map((m) => (
                 <li key={m.id} className="flex items-start gap-3">
                   {m.completedAt ? (
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" aria-hidden="true" />
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-hidden="true" />
                   ) : (
-                    <Circle className="mt-0.5 h-4 w-4 shrink-0 text-slate-600" aria-hidden="true" />
+                    <Circle className="mt-0.5 h-4 w-4 shrink-0 text-charcoal-muted" aria-hidden="true" />
                   )}
                   <div>
-                    <p className={cn("text-sm", m.completedAt ? "text-slate-400 line-through" : "text-slate-200")}>
+                    <p className={cn("text-sm", m.completedAt ? "text-charcoal-muted line-through" : "text-charcoal-dark")}>
                       {m.title}
                     </p>
-                    {m.dueDate && <p className="text-xs text-slate-500">Due {formatDate(m.dueDate)}</p>}
+                    {m.dueDate && <p className="text-xs text-charcoal-muted">Due {formatDate(m.dueDate)}</p>}
                   </div>
                 </li>
               ))}
@@ -115,10 +115,10 @@ export default async function ClientProjectDetailPage({ params }: { params: { id
           <ul className="space-y-3">
             {recentUpdates.map((t) => (
               <li key={t.id} className="flex items-center justify-between gap-4 text-sm">
-                <p className="text-slate-300">
-                  <span className="text-slate-100">{t.title}</span> is now <StatusBadge value={t.status} />
+                <p className="text-charcoal">
+                  <span className="text-charcoal-dark">{t.title}</span> is now <StatusBadge value={t.status} />
                 </p>
-                <span className="shrink-0 text-xs text-slate-600">{formatDate(t.updatedAt)}</span>
+                <span className="shrink-0 text-xs text-charcoal-muted">{formatDate(t.updatedAt)}</span>
               </li>
             ))}
           </ul>
@@ -130,12 +130,12 @@ export default async function ClientProjectDetailPage({ params }: { params: { id
         <CardHeader title="Messages" description="Send a message or request about this project." />
         <div className="mb-4 space-y-3">
           {messages.length === 0 ? (
-            <p className="text-sm text-slate-500">No messages yet.</p>
+            <p className="text-sm text-charcoal-muted">No messages yet.</p>
           ) : (
             messages.map((m) => (
-              <div key={m.id} className="rounded-lg bg-white/[0.03] p-3">
-                <p className="whitespace-pre-wrap text-sm text-slate-300">{m.body}</p>
-                <p className="mt-1.5 text-xs text-slate-500">
+              <div key={m.id} className="rounded-lg bg-surface p-3">
+                <p className="whitespace-pre-wrap text-sm text-charcoal">{m.body}</p>
+                <p className="mt-1.5 text-xs text-charcoal-muted">
                   {m.author?.name ?? "Unknown"}
                   {m.author && m.author.role !== "CLIENT" && " · Team"} · {formatDate(m.createdAt)}
                 </p>
@@ -152,8 +152,8 @@ export default async function ClientProjectDetailPage({ params }: { params: { id
 function TaskStat({ label, value }: { label: string; value: number }) {
   return (
     <div>
-      <p className="text-2xl font-bold text-slate-100">{value}</p>
-      <p className="text-xs text-slate-500">{label}</p>
+      <p className="text-2xl font-bold text-charcoal-dark">{value}</p>
+      <p className="text-xs text-charcoal-muted">{label}</p>
     </div>
   );
 }

@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import { Pencil } from "lucide-react";
 import { updateProjectAction } from "@/lib/actions/admin-projects";
 import { useServerAction } from "@/lib/hooks/useServerAction";
-import { FormField } from "@/components/ui/FormField";
-import { TextareaField } from "@/components/ui/Textarea";
-import { SelectField } from "@/components/ui/Select";
-import { Button } from "@/components/ui/Button";
-import { Alert } from "@/components/ui/Alert";
+import { FormField } from "@/components/admin/ui/FormField";
+import { TextareaField } from "@/components/admin/ui/Textarea";
+import { SelectField } from "@/components/admin/ui/Select";
+import { Button } from "@/components/admin/ui/Button";
+import { Alert } from "@/components/admin/ui/Alert";
 
 const PRIORITY_OPTIONS = ["LOW", "MEDIUM", "HIGH", "URGENT"] as const;
 
@@ -56,12 +56,12 @@ export function EditProjectForm({ projectId, hasTasks, initial }: EditProjectFor
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-white/10 p-4">
+    <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-hairline p-4">
       {error && <Alert variant="error">{error}</Alert>}
 
       <div>
         <FormField id="editTitle" label="Title" value={form.title} onChange={(e) => update("title", e.target.value)} />
-        {fieldErrors.title && <p className="mt-1 text-xs text-red-400">{fieldErrors.title}</p>}
+        {fieldErrors.title && <p className="mt-1 text-xs text-red-600">{fieldErrors.title}</p>}
       </div>
 
       <TextareaField
@@ -115,9 +115,9 @@ export function EditProjectForm({ projectId, hasTasks, initial }: EditProjectFor
           onChange={(e) => update("progress", e.target.value)}
           disabled={hasTasks}
         />
-        {fieldErrors.progress && <p className="mt-1 text-xs text-red-400">{fieldErrors.progress}</p>}
+        {fieldErrors.progress && <p className="mt-1 text-xs text-red-600">{fieldErrors.progress}</p>}
         {hasTasks && (
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-charcoal-muted">
             This project has tasks, so progress is calculated automatically from how many are completed.
           </p>
         )}

@@ -7,9 +7,9 @@ import { requireProjectStaff } from "@/lib/admin-guard";
 import { canManageProject } from "@/lib/authorization";
 import { getProjectById, getProjectManagerCandidates } from "@/lib/services/admin/projects";
 import { getClientOptions } from "@/lib/services/admin/clients";
-import { Card, CardHeader } from "@/components/ui/Card";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { ProgressBar } from "@/components/ui/ProgressBar";
+import { Card, CardHeader } from "@/components/admin/ui/Card";
+import { StatusBadge } from "@/components/admin/ui/StatusBadge";
+import { ProgressBar } from "@/components/admin/ui/ProgressBar";
 import { formatDate } from "@/lib/utils";
 import { EditProjectForm } from "@/components/admin/projects/EditProjectForm";
 import { ChangeProjectStatusControl } from "@/components/admin/projects/ChangeProjectStatusControl";
@@ -52,7 +52,7 @@ export default async function AdminProjectDetailPage({ params }: { params: { id:
     <div>
       <Link
         href="/admin/projects"
-        className="mb-6 inline-flex items-center gap-1.5 text-sm text-sky-400 hover:text-sky-300"
+        className="mb-6 inline-flex items-center gap-1.5 text-sm text-crimson hover:text-crimson-hover"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden="true" />
         Back to projects
@@ -60,14 +60,14 @@ export default async function AdminProjectDetailPage({ params }: { params: { id:
 
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">{project.title}</h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <h1 className="text-2xl font-bold text-charcoal-dark">{project.title}</h1>
+          <p className="mt-1 text-sm text-charcoal-muted">
             {project.client.companyName}
             {project.originatingLead && (
               <>
                 {" "}
                 · from lead{" "}
-                <Link href={`/admin/leads/${project.originatingLead.id}`} className="text-sky-400 hover:text-sky-300">
+                <Link href={`/admin/leads/${project.originatingLead.id}`} className="text-crimson hover:text-crimson-hover">
                   {project.originatingLead.name}
                 </Link>
               </>
@@ -78,7 +78,7 @@ export default async function AdminProjectDetailPage({ params }: { params: { id:
       </div>
 
       {!canEdit && (
-        <div className="mb-6 flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-2.5 text-sm text-amber-300">
+        <div className="mb-6 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-700">
           <ShieldAlert className="h-4 w-4 shrink-0" aria-hidden="true" />
           View only — only this project&apos;s manager or an admin can edit it.
         </div>
@@ -89,10 +89,10 @@ export default async function AdminProjectDetailPage({ params }: { params: { id:
         <div className="space-y-6 lg:col-span-2">
           <Card>
             <CardHeader title="Overview" />
-            {project.description && <p className="mb-4 text-sm text-slate-300">{project.description}</p>}
+            {project.description && <p className="mb-4 text-sm text-charcoal">{project.description}</p>}
             <div className="mb-4 flex items-center justify-between">
-              <span className="text-sm text-slate-400">Progress</span>
-              <span className="text-sm font-medium text-slate-200">{project.computedProgress}%</span>
+              <span className="text-sm text-charcoal-muted">Progress</span>
+              <span className="text-sm font-medium text-charcoal-dark">{project.computedProgress}%</span>
             </div>
             <ProgressBar value={project.computedProgress} />
             <dl className="mt-6 grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
@@ -102,7 +102,7 @@ export default async function AdminProjectDetailPage({ params }: { params: { id:
               <Field label="Due date" value={formatDate(project.deadline)} />
             </dl>
             {canEdit && (
-              <div className="mt-4 border-t border-white/5 pt-4">
+              <div className="mt-4 border-t border-hairline pt-4">
                 <EditProjectForm
                   projectId={project.id}
                   hasTasks={project.tasks.length > 0}
@@ -126,16 +126,16 @@ export default async function AdminProjectDetailPage({ params }: { params: { id:
               description={`${project.tasks.length} task${project.tasks.length === 1 ? "" : "s"}`}
             />
             {project.tasks.length === 0 ? (
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-charcoal-muted">
                 No tasks yet. Progress is tracked manually until tasks exist.
               </p>
             ) : (
               <ul className="space-y-2">
                 {project.tasks.map((task) => (
-                  <li key={task.id} className="flex items-center justify-between gap-4 rounded-lg bg-white/[0.03] p-3 text-sm">
+                  <li key={task.id} className="flex items-center justify-between gap-4 rounded-lg bg-surface p-3 text-sm">
                     <div>
-                      <p className="text-slate-200">{task.title}</p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-charcoal-dark">{task.title}</p>
+                      <p className="text-xs text-charcoal-muted">
                         {task.assignee?.name ?? "Unassigned"}
                         {task.dueDate && ` · Due ${formatDate(task.dueDate)}`}
                       </p>
@@ -153,16 +153,16 @@ export default async function AdminProjectDetailPage({ params }: { params: { id:
           <Card>
             <CardHeader title="Activity" description="Recorded changes to this project." />
             {project.activity.length === 0 ? (
-              <p className="text-sm text-slate-500">No activity recorded yet.</p>
+              <p className="text-sm text-charcoal-muted">No activity recorded yet.</p>
             ) : (
               <ul className="space-y-3">
                 {project.activity.map((event) => (
                   <li key={event.id} className="flex items-center justify-between gap-4 text-sm">
-                    <p className="text-slate-300">
-                      <span className="text-slate-100">{event.action.replace(/_/g, " ")}</span>
-                      {event.user && <span className="text-slate-500"> · {event.user.name}</span>}
+                    <p className="text-charcoal">
+                      <span className="text-charcoal-dark">{event.action.replace(/_/g, " ")}</span>
+                      {event.user && <span className="text-charcoal-muted"> · {event.user.name}</span>}
                     </p>
-                    <span className="shrink-0 text-xs text-slate-600">{formatDate(event.createdAt)}</span>
+                    <span className="shrink-0 text-xs text-charcoal-muted">{formatDate(event.createdAt)}</span>
                   </li>
                 ))}
               </ul>
@@ -174,7 +174,7 @@ export default async function AdminProjectDetailPage({ params }: { params: { id:
         <div className="space-y-6">
           <Card>
             <CardHeader title="Client" />
-            <p className="mb-3 text-sm text-slate-200">{project.client.companyName}</p>
+            <p className="mb-3 text-sm text-charcoal-dark">{project.client.companyName}</p>
             {canEdit && (
               <AssignClientControl projectId={project.id} currentClientId={project.client.id} clients={clients} />
             )}
@@ -182,8 +182,8 @@ export default async function AdminProjectDetailPage({ params }: { params: { id:
 
           <Card>
             <CardHeader title="Manager" />
-            <p className="mb-3 text-sm text-slate-200">
-              {project.manager?.name ?? <span className="text-slate-500">Unassigned</span>}
+            <p className="mb-3 text-sm text-charcoal-dark">
+              {project.manager?.name ?? <span className="text-charcoal-muted">Unassigned</span>}
             </p>
             {canEdit && (
               <AssignManagerControl
@@ -211,8 +211,8 @@ export default async function AdminProjectDetailPage({ params }: { params: { id:
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
-      <dt className="text-xs uppercase tracking-wider text-slate-500">{label}</dt>
-      <dd className="mt-1 text-slate-200">{value}</dd>
+      <dt className="text-xs uppercase tracking-wider text-charcoal-muted">{label}</dt>
+      <dd className="mt-1 text-charcoal-dark">{value}</dd>
     </div>
   );
 }

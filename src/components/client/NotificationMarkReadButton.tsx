@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { markClientNotificationReadAction } from "@/lib/actions/client";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/admin/ui/Button";
 
 export function NotificationMarkReadButton({ notificationId }: { notificationId: string }) {
   const router = useRouter();

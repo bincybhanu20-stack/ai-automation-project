@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { FormField } from "@/components/ui/FormField";
-import { SelectField } from "@/components/ui/Select";
-import { Button } from "@/components/ui/Button";
+import { FormField } from "@/components/admin/ui/FormField";
+import { SelectField } from "@/components/admin/ui/Select";
+import { Button } from "@/components/admin/ui/Button";
 
 const STATUS_OPTIONS = ["NEW", "CONTACTED", "QUALIFIED", "PROPOSAL", "WON", "LOST"] as const;
 const SOURCE_OPTIONS = ["WEBSITE", "REFERRAL", "API", "MANUAL", "N8N_WEBHOOK", "OTHER"] as const;
@@ -38,14 +38,14 @@ export function LeadsFilterBar({ q, status, source, assignedTo, staff, hasActive
       <SelectField id="source" name="source" label="Source" options={SOURCE_OPTIONS} defaultValue={source} />
 
       <div>
-        <label htmlFor="assignedTo" className="mb-1.5 block text-sm font-medium text-slate-300">
+        <label htmlFor="assignedTo" className="mb-1.5 block text-sm font-medium text-charcoal">
           Assigned to
         </label>
         <select
           id="assignedTo"
           name="assignedTo"
           defaultValue={assignedTo}
-          className="glass-input w-full rounded-lg px-3.5 py-2.5 text-sm"
+          className="border border-hairline bg-white text-charcoal-dark focus:outline-none focus:ring-2 focus:ring-crimson/40 focus:border-crimson w-full rounded-lg px-3.5 py-2.5 text-sm"
         >
           <option value="">Anyone</option>
           <option value="unassigned">Unassigned</option>
@@ -64,7 +64,7 @@ export function LeadsFilterBar({ q, status, source, assignedTo, staff, hasActive
         {hasActiveFilters && (
           <Link
             href="/admin/leads"
-            className="inline-flex items-center rounded-lg px-3 py-1.5 text-sm text-slate-400 hover:text-slate-100"
+            className="inline-flex items-center rounded-lg px-3 py-1.5 text-sm text-charcoal-muted hover:text-charcoal-dark"
           >
             Clear
           </Link>

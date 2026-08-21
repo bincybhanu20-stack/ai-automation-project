@@ -1,8 +1,9 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/admin-guard";
 import { getReportMetrics } from "@/lib/services/admin/reports";
-import { Card, CardHeader } from "@/components/ui/Card";
-import { StatusBadge } from "@/components/ui/StatusBadge";
+import { Card, CardHeader } from "@/components/admin/ui/Card";
+import { StatusBadge } from "@/components/admin/ui/StatusBadge";
+import { MODULE_ACCENTS, type ModuleColor } from "@/lib/admin-module-colors";
 
 export async function generateMetadata(): Promise<Metadata> {
   await requireAdmin();
@@ -13,25 +14,35 @@ export const dynamic = "force-dynamic";
 
 function MetricRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between border-b border-white/5 py-2.5 last:border-0">
-      <span className="text-sm text-slate-400">{label}</span>
-      <span className="text-sm font-medium text-slate-200">{value}</span>
+    <div className="flex items-center justify-between border-b border-hairline py-2.5 last:border-0">
+      <span className="text-sm text-charcoal-muted">{label}</span>
+      <span className="text-sm font-medium text-charcoal-dark">{value}</span>
     </div>
   );
 }
 
-function BreakdownBar({ label, count, total }: { label: string; count: number; total: number }) {
+function BreakdownBar({
+  label,
+  count,
+  total,
+  color = "crimson",
+}: {
+  label: string;
+  count: number;
+  total: number;
+  color?: ModuleColor;
+}) {
   const pct = total === 0 ? 0 : Math.round((count / total) * 100);
   return (
     <div>
       <div className="mb-1 flex items-center justify-between text-xs">
         <StatusBadge value={label} />
-        <span className="text-slate-400">
+        <span className="text-charcoal-muted">
           {count} ({pct}%)
         </span>
       </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-white/5">
-        <div className="h-full rounded-full bg-sky-500" style={{ width: `${pct}%` }} />
+      <div className="h-1.5 overflow-hidden rounded-full bg-surface">
+        <div className={`h-full rounded-full ${MODULE_ACCENTS[color].bar}`} style={{ width: `${pct}%` }} />
       </div>
     </div>
   );
@@ -43,8 +54,8 @@ export default async function AdminReportsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-slate-100">Reports</h1>
-      <p className="mt-1 text-sm text-slate-400">Live metrics computed from the current database.</p>
+      <h1 className="text-2xl font-bold text-charcoal-dark">Reports</h1>
+      <p className="mt-1 text-sm text-charcoal-muted">Live metrics computed from the current database.</p>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <Card>
@@ -67,10 +78,10 @@ export default async function AdminReportsPage() {
           <CardHeader title="Leads by status" />
           <div className="space-y-3">
             {m.leadsByStatus.length === 0 ? (
-              <p className="text-sm text-slate-500">No leads yet.</p>
+              <p className="text-sm text-charcoal-muted">No leads yet.</p>
             ) : (
               m.leadsByStatus.map((row) => (
-                <BreakdownBar key={row.status} label={row.status} count={row.count} total={m.totalLeads} />
+                <BreakdownBar key={row.status} label={row.status} count={row.count} total={m.totalLeads} color="sky" />
               ))
             )}
           </div>
@@ -80,10 +91,10 @@ export default async function AdminReportsPage() {
           <CardHeader title="Leads by source" />
           <div className="space-y-3">
             {m.leadsBySource.length === 0 ? (
-              <p className="text-sm text-slate-500">No leads yet.</p>
+              <p className="text-sm text-charcoal-muted">No leads yet.</p>
             ) : (
               m.leadsBySource.map((row) => (
-                <BreakdownBar key={row.source} label={row.source} count={row.count} total={m.totalLeads} />
+                <BreakdownBar key={row.source} label={row.source} count={row.count} total={m.totalLeads} color="sky" />
               ))
             )}
           </div>

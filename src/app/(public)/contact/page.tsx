@@ -7,6 +7,7 @@ import { LeadCaptureForm } from "@/components/leads/LeadCaptureForm";
 export const metadata: Metadata = {
   title: "Contact",
   description: "Get in touch — tell us about your project and we'll respond within one business day.",
+  alternates: { canonical: "/contact" },
 };
 
 export default function ContactPage() {
@@ -24,24 +25,24 @@ export default function ContactPage() {
             <div className="lg:col-span-2">
               <div className="space-y-6">
                 <div className="flex gap-3">
-                  <Mail className="mt-0.5 h-5 w-5 shrink-0 text-sky-400" aria-hidden="true" />
+                  <Mail className="mt-0.5 h-5 w-5 shrink-0 text-crimson" aria-hidden="true" />
                   <div>
-                    <p className="text-sm font-medium text-slate-200">Email</p>
-                    <p className="text-sm text-slate-400">hello@clientflow.example</p>
+                    <p className="text-sm font-medium text-charcoal-dark">Email</p>
+                    <p className="text-sm text-charcoal">bincybhanu20@gmail.com</p>
                   </div>
                 </div>
                 <div className="flex gap-3">
-                  <Clock className="mt-0.5 h-5 w-5 shrink-0 text-sky-400" aria-hidden="true" />
+                  <Clock className="mt-0.5 h-5 w-5 shrink-0 text-crimson" aria-hidden="true" />
                   <div>
-                    <p className="text-sm font-medium text-slate-200">Response time</p>
-                    <p className="text-sm text-slate-400">Within one business day</p>
+                    <p className="text-sm font-medium text-charcoal-dark">Response time</p>
+                    <p className="text-sm text-charcoal">Within one business day</p>
                   </div>
                 </div>
               </div>
             </div>
 
             <div className="lg:col-span-3">
-              <LeadCaptureForm />
+              <LeadCaptureForm variant="contact" />
             </div>
           </div>
         </Container>

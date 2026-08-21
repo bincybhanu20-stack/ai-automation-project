@@ -4,8 +4,8 @@ import { Loader2 } from "lucide-react";
 // for why this must not be a root-level loading.tsx.
 export default function ManagerLoading() {
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <Loader2 className="h-8 w-8 animate-spin text-sky-400" aria-hidden="true" />
+    <div className="flex min-h-screen items-center justify-center bg-white">
+      <Loader2 className="h-8 w-8 animate-spin text-crimson" aria-hidden="true" />
     </div>
   );
 }

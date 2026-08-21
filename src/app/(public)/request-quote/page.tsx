@@ -6,6 +6,7 @@ import { LeadCaptureForm } from "@/components/leads/LeadCaptureForm";
 export const metadata: Metadata = {
   title: "Request a Quote",
   description: "Tell us about your project — service, budget and timeline — and get a response within one business day.",
+  alternates: { canonical: "/request-quote" },
 };
 
 export default function RequestQuotePage() {

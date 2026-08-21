@@ -32,10 +32,10 @@ async function sendEmail({ to, subject, body }: SendEmailParams): Promise<void> 
 export async function sendPasswordResetEmail(to: string, name: string, resetUrl: string) {
   await sendEmail({
     to,
-    subject: "Reset your ClientFlow password",
+    subject: "Reset your Elicpesoftware password",
     body:
       `Hi ${name},\n\n` +
-      `We received a request to reset your ClientFlow password. This link expires in 1 hour:\n\n` +
+      `We received a request to reset your Elicpesoftware password. This link expires in 1 hour:\n\n` +
       `${resetUrl}\n\n` +
       `If you didn't request this, you can safely ignore this email — your password won't change.`,
   });
@@ -44,7 +44,7 @@ export async function sendPasswordResetEmail(to: string, name: string, resetUrl:
 export async function sendVerificationEmail(to: string, name: string, verifyUrl: string) {
   await sendEmail({
     to,
-    subject: "Verify your ClientFlow email address",
+    subject: "Verify your Elicpesoftware email address",
     body:
       `Hi ${name},\n\n` +
       `Please confirm your email address by visiting this link (valid for 24 hours):\n\n` +

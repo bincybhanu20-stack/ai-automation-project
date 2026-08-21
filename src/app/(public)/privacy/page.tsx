@@ -1,18 +1,19 @@
 import type { Metadata } from "next";
 import { Container } from "@/components/ui/Container";
-import { Alert } from "@/components/ui/Alert";
+import { PublicAlert } from "@/components/marketing/ui/Alert";
 import { PageHero } from "@/components/marketing/PageHero";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "How ClientFlow collects, uses and protects your information.",
+  description: "How Elicpesoftware collects, uses and protects your information.",
+  alternates: { canonical: "/privacy" },
 };
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="border-t border-white/5 py-8 first:border-t-0 first:pt-0">
-      <h2 className="text-lg font-semibold text-slate-100">{title}</h2>
-      <div className="mt-3 space-y-3 text-sm leading-relaxed text-slate-400">{children}</div>
+    <section className="border-t border-hairline py-8 first:border-t-0 first:pt-0">
+      <h2 className="text-lg font-semibold text-charcoal-dark">{title}</h2>
+      <div className="mt-3 space-y-3 text-sm leading-relaxed text-charcoal">{children}</div>
     </section>
   );
 }
@@ -24,13 +25,13 @@ export default function PrivacyPage() {
 
       <section className="pb-16 sm:pb-20">
         <Container size="narrow">
-          <Alert variant="error">
+          <PublicAlert variant="error">
             This is a template, not legal advice. Have a qualified lawyer review and
             customize this page — including the retention periods, third-party services
             and contact details below — before relying on it in production.
-          </Alert>
+          </PublicAlert>
 
-          <p className="mt-8 text-xs text-slate-500">Last updated: 21 August 2026</p>
+          <p className="mt-8 text-xs text-charcoal-muted">Last updated: 21 August 2026</p>
 
           <div className="mt-4">
             <Section title="1. Information we collect">
@@ -63,11 +64,11 @@ export default function PrivacyPage() {
               <p>We use the following categories of third-party services:</p>
               <ul className="ml-4 list-disc space-y-1.5">
                 <li>
-                  <span className="text-slate-300">Automation (n8n):</span> submitted
+                  <span className="text-charcoal-dark">Automation (n8n):</span> submitted
                   lead data may trigger internal workflow notifications.
                 </li>
                 <li>
-                  <span className="text-slate-300">AI providers:</span> if configured,
+                  <span className="text-charcoal-dark">AI providers:</span> if configured,
                   lead messages may be sent to an AI provider for automated
                   qualification. No AI provider is contacted with your information
                   unless our system is configured to do so.
@@ -99,7 +100,7 @@ export default function PrivacyPage() {
                 Depending on your location, you may have the right to access, correct,
                 export or request deletion of your personal information. To exercise
                 these rights, contact us using the details on our{" "}
-                <a href="/contact" className="text-sky-400 hover:text-sky-300">
+                <a href="/contact" className="text-crimson hover:text-crimson-hover">
                   Contact page
                 </a>
                 .
@@ -125,7 +126,7 @@ export default function PrivacyPage() {
             <Section title="9. Contact">
               <p>
                 Questions about this policy can be sent via our{" "}
-                <a href="/contact" className="text-sky-400 hover:text-sky-300">
+                <a href="/contact" className="text-crimson hover:text-crimson-hover">
                   Contact page
                 </a>
                 .

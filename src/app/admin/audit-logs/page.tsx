@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import { ScrollText } from "lucide-react";
 import { requireAdmin } from "@/lib/admin-guard";
 import { getAuditLogs, getAuditLogEntityTypes } from "@/lib/services/admin/audit-logs";
-import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/Table";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { Pagination } from "@/components/ui/Pagination";
+import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/admin/ui/Table";
+import { EmptyState } from "@/components/admin/ui/EmptyState";
+import { Pagination } from "@/components/admin/ui/Pagination";
 import Link from "next/link";
 import { cn, formatDate } from "@/lib/utils";
+import { MODULE_ACCENTS } from "@/lib/admin-module-colors";
 
 export async function generateMetadata(): Promise<Metadata> {
   await requireAdmin();
@@ -30,8 +31,8 @@ export default async function AdminAuditLogsPage({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-slate-100">Audit Logs</h1>
-      <p className="mt-1 text-sm text-slate-400">{total} recorded events</p>
+      <h1 className="text-2xl font-bold text-charcoal-dark">Audit Logs</h1>
+      <p className="mt-1 text-sm text-charcoal-muted">{total} recorded events</p>
 
       <div className="my-6 flex flex-wrap gap-2">
         <FilterChip label="All" href="/admin/audit-logs" active={!entity} />
@@ -57,19 +58,19 @@ export default async function AdminAuditLogsPage({
             <Tbody>
               {logs.map((log) => (
                 <Tr key={log.id}>
-                  <Td className="font-medium text-slate-100">{log.action}</Td>
+                  <Td className="font-medium text-charcoal-dark">{log.action}</Td>
                   <Td>
                     {log.entity}
                     {log.entity === "Lead" && log.entityId && (
                       <>
                         {" "}
-                        <Link href={`/admin/leads/${log.entityId}`} className="text-sky-400 hover:text-sky-300">
+                        <Link href={`/admin/leads/${log.entityId}`} className="text-crimson hover:text-crimson-hover">
                           (view)
                         </Link>
                       </>
                     )}
                   </Td>
-                  <Td>{log.user?.name ?? <span className="text-slate-600">System / public</span>}</Td>
+                  <Td>{log.user?.name ?? <span className="text-charcoal-muted">System / public</span>}</Td>
                   <Td className="font-mono text-xs">{log.ipAddress ?? "—"}</Td>
                   <Td>{formatDate(log.createdAt)}</Td>
                 </Tr>
@@ -94,8 +95,8 @@ function FilterChip({ label, href, active }: { label: string; href: string; acti
       className={cn(
         "rounded-full border px-3 py-1 text-xs font-medium",
         active
-          ? "border-sky-500/30 bg-sky-500/10 text-sky-300"
-          : "border-white/10 text-slate-400 hover:text-slate-100"
+          ? `border-slate-300 ${MODULE_ACCENTS.slate.bg} ${MODULE_ACCENTS.slate.text}`
+          : "border-hairline text-charcoal-muted hover:text-charcoal-dark"
       )}
     >
       {label}

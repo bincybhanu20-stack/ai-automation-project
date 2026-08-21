@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { UserCheck } from "lucide-react";
 import { convertLeadToClientAction } from "@/lib/actions/admin-leads";
 import { useServerAction } from "@/lib/hooks/useServerAction";
-import { Button } from "@/components/ui/Button";
-import { Alert } from "@/components/ui/Alert";
+import { Button } from "@/components/admin/ui/Button";
+import { Alert } from "@/components/admin/ui/Alert";
 
 export function ConvertToClientButton({ leadId }: { leadId: string }) {
   const router = useRouter();
@@ -21,9 +21,9 @@ export function ConvertToClientButton({ leadId }: { leadId: string }) {
 
   if (confirming) {
     return (
-      <div className="space-y-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
+      <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
         {error && <Alert variant="error">{error}</Alert>}
-        <p className="text-xs text-slate-300">
+        <p className="text-xs text-charcoal">
           This creates a new client record and marks the lead as WON. This can&apos;t be undone.
           Are you sure?
         </p>

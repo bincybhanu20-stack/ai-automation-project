@@ -3,11 +3,12 @@
 import { useState, type FormEvent } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { usePostJson } from "@/lib/hooks/usePostJson";
-import { FormField } from "@/components/ui/FormField";
-import { TextareaField } from "@/components/ui/Textarea";
-import { SelectField } from "@/components/ui/Select";
-import { Alert } from "@/components/ui/Alert";
-import { Button } from "@/components/ui/Button";
+import { PublicField } from "@/components/marketing/ui/Field";
+import { PublicTextarea } from "@/components/marketing/ui/Textarea";
+import { PublicSelect } from "@/components/marketing/ui/Select";
+import { PublicAlert } from "@/components/marketing/ui/Alert";
+import { PublicCard } from "@/components/marketing/ui/Card";
+import { PublicButton } from "@/components/marketing/ui/Button";
 import { SERVICE_OPTIONS, BUDGET_OPTIONS } from "@/lib/validations/leads";
 
 interface LeadFormState {
@@ -32,7 +33,14 @@ const EMPTY_FORM: LeadFormState = {
   website: "",
 };
 
-export function LeadCaptureForm() {
+interface LeadCaptureFormProps {
+  /** "quote" shows the full field set (adds Budget). "contact" is the
+   * lighter version used on the Contact page — same underlying
+   * projectDescription field, just labeled "Message". */
+  variant?: "contact" | "quote";
+}
+
+export function LeadCaptureForm({ variant = "quote" }: LeadCaptureFormProps) {
   const { post, loading, error, fieldErrors } = usePostJson<{ success: boolean; message: string }>();
   const [form, setForm] = useState<LeadFormState>(EMPTY_FORM);
   const [submitted, setSubmitted] = useState<string | null>(null);
@@ -52,23 +60,23 @@ export function LeadCaptureForm() {
 
   if (submitted) {
     return (
-      <div className="glass-card rounded-xl p-8 text-center">
-        <CheckCircle2 className="mx-auto mb-4 h-10 w-10 text-emerald-400" aria-hidden="true" />
-        <h3 className="text-lg font-semibold text-slate-100">Request received</h3>
-        <p className="mt-2 text-sm text-slate-400">{submitted}</p>
-        <Button variant="secondary" className="mt-6" onClick={() => setSubmitted(null)}>
+      <PublicCard className="text-center">
+        <CheckCircle2 className="mx-auto mb-4 h-10 w-10 text-crimson" aria-hidden="true" />
+        <h3 className="text-lg font-semibold text-charcoal-dark">Request received</h3>
+        <p className="mt-2 text-sm text-charcoal">{submitted}</p>
+        <PublicButton variant="secondary" className="mt-6" onClick={() => setSubmitted(null)}>
           Submit another request
-        </Button>
-      </div>
+        </PublicButton>
+      </PublicCard>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="glass-card space-y-5 rounded-xl p-6 sm:p-8" noValidate>
-      {error && <Alert variant="error">{error}</Alert>}
+    <form onSubmit={handleSubmit} className="pub-card space-y-5 rounded-2xl p-6 sm:p-8" noValidate>
+      {error && <PublicAlert variant="error">{error}</PublicAlert>}
 
       <div className="grid gap-5 sm:grid-cols-2">
-        <FormField
+        <PublicField
           id="name"
           label="Full name"
           required
@@ -77,9 +85,9 @@ export function LeadCaptureForm() {
           onChange={(e) => update("name", e.target.value)}
           placeholder="Jordan Blake"
         />
-        {fieldErrors.name && <p className="-mt-4 text-xs text-red-400 sm:col-start-1">{fieldErrors.name}</p>}
+        {fieldErrors.name && <p className="-mt-4 text-xs text-crimson sm:col-start-1">{fieldErrors.name}</p>}
 
-        <FormField
+        <PublicField
           id="email"
           label="Email"
           type="email"
@@ -89,9 +97,9 @@ export function LeadCaptureForm() {
           onChange={(e) => update("email", e.target.value)}
           placeholder="you@company.com"
         />
-        {fieldErrors.email && <p className="-mt-4 text-xs text-red-400">{fieldErrors.email}</p>}
+        {fieldErrors.email && <p className="-mt-4 text-xs text-crimson">{fieldErrors.email}</p>}
 
-        <FormField
+        <PublicField
           id="phone"
           label="Phone (optional)"
           type="tel"
@@ -100,9 +108,9 @@ export function LeadCaptureForm() {
           onChange={(e) => update("phone", e.target.value)}
           placeholder="+1 555 123 4567"
         />
-        {fieldErrors.phone && <p className="-mt-4 text-xs text-red-400">{fieldErrors.phone}</p>}
+        {fieldErrors.phone && <p className="-mt-4 text-xs text-crimson">{fieldErrors.phone}</p>}
 
-        <FormField
+        <PublicField
           id="company"
           label="Company (optional)"
           autoComplete="organization"
@@ -110,9 +118,9 @@ export function LeadCaptureForm() {
           onChange={(e) => update("company", e.target.value)}
           placeholder="Acme Robotics"
         />
-        {fieldErrors.company && <p className="-mt-4 text-xs text-red-400">{fieldErrors.company}</p>}
+        {fieldErrors.company && <p className="-mt-4 text-xs text-crimson">{fieldErrors.company}</p>}
 
-        <SelectField
+        <PublicSelect
           id="service"
           label="Service you're interested in"
           options={SERVICE_OPTIONS}
@@ -120,19 +128,21 @@ export function LeadCaptureForm() {
           onChange={(e) => update("service", e.target.value)}
         />
 
-        <SelectField
-          id="budget"
-          label="Estimated budget"
-          options={BUDGET_OPTIONS}
-          value={form.budget}
-          onChange={(e) => update("budget", e.target.value)}
-        />
+        {variant === "quote" && (
+          <PublicSelect
+            id="budget"
+            label="Estimated budget"
+            options={BUDGET_OPTIONS}
+            value={form.budget}
+            onChange={(e) => update("budget", e.target.value)}
+          />
+        )}
       </div>
 
       <div>
-        <TextareaField
+        <PublicTextarea
           id="projectDescription"
-          label="Tell us about your project"
+          label={variant === "quote" ? "Tell us about your project" : "Message"}
           required
           rows={5}
           minLength={20}
@@ -141,7 +151,7 @@ export function LeadCaptureForm() {
           placeholder="What are you trying to build, and what's the timeline?"
         />
         {fieldErrors.projectDescription && (
-          <p className="mt-1.5 text-xs text-red-400">{fieldErrors.projectDescription}</p>
+          <p className="mt-1.5 text-xs text-crimson">{fieldErrors.projectDescription}</p>
         )}
       </div>
 
@@ -162,12 +172,12 @@ export function LeadCaptureForm() {
         />
       </div>
 
-      <Button type="submit" isLoading={loading} className="w-full sm:w-auto">
-        Submit request
-      </Button>
-      <p className="text-xs text-slate-500">
+      <PublicButton type="submit" isLoading={loading} className="w-full sm:w-auto">
+        {variant === "quote" ? "Start a Project" : "Submit"}
+      </PublicButton>
+      <p className="text-xs text-charcoal-muted">
         By submitting, you agree to our{" "}
-        <a href="/privacy" className="underline hover:text-slate-300">
+        <a href="/privacy" className="underline hover:text-charcoal">
           Privacy Policy
         </a>
         .

@@ -47,3 +47,24 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     automationFailures,
   };
 }
+
+/**
+ * Real groupBy counts for the dashboard's extra chart cards — tasks by
+ * status, projects by status, staff by role. Same Prisma groupBy pattern as
+ * getReportMetrics() (src/lib/services/admin/reports.ts), scoped to just
+ * what the dashboard's "overall view" needs rather than reusing that
+ * function's full report payload.
+ */
+export async function getDashboardBreakdowns() {
+  const [tasksByStatus, projectsByStatus, usersByRole] = await Promise.all([
+    prisma.task.groupBy({ by: ["status"], _count: true }),
+    prisma.project.groupBy({ by: ["status"], _count: true }),
+    prisma.user.groupBy({ by: ["role"], _count: true, where: { status: "ACTIVE" } }),
+  ]);
+
+  return {
+    tasksByStatus: tasksByStatus.map((row) => ({ status: row.status, count: row._count })),
+    projectsByStatus: projectsByStatus.map((row) => ({ status: row.status, count: row._count })),
+    usersByRole: usersByRole.map((row) => ({ role: row.role, count: row._count })),
+  };
+}

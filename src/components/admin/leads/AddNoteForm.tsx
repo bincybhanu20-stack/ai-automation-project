@@ -4,9 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { addLeadNoteAction } from "@/lib/actions/admin-leads";
 import { useServerAction } from "@/lib/hooks/useServerAction";
-import { TextareaField } from "@/components/ui/Textarea";
-import { Button } from "@/components/ui/Button";
-import { Alert } from "@/components/ui/Alert";
+import { TextareaField } from "@/components/admin/ui/Textarea";
+import { Button } from "@/components/admin/ui/Button";
+import { Alert } from "@/components/admin/ui/Alert";
 
 export function AddNoteForm({ leadId }: { leadId: string }) {
   const router = useRouter();
@@ -33,7 +33,7 @@ export function AddNoteForm({ leadId }: { leadId: string }) {
         onChange={(e) => setBody(e.target.value)}
         placeholder="Internal note about this lead…"
       />
-      {fieldErrors.body && <p className="text-xs text-red-400">{fieldErrors.body}</p>}
+      {fieldErrors.body && <p className="text-xs text-red-600">{fieldErrors.body}</p>}
       <Button type="submit" isLoading={isPending} size="sm" disabled={!body.trim()}>
         Add note
       </Button>

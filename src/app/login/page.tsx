@@ -11,7 +11,7 @@ export default function LoginPage() {
     <main className="flex min-h-screen items-center py-16">
       <Container size="narrow">
         <div className="mb-8 text-center">
-          <h1 className="gradient-text text-3xl font-bold">ClientFlow</h1>
+          <h1 className="gradient-text text-3xl font-bold">Elicpesoftware</h1>
           <p className="mt-2 text-sm text-slate-400">Log in to your account</p>
         </div>
 

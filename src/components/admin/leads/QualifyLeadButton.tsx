@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import { Sparkles } from "lucide-react";
 import { qualifyLeadAction } from "@/lib/actions/admin-leads";
 import { useServerAction } from "@/lib/hooks/useServerAction";
-import { Button } from "@/components/ui/Button";
-import { Alert } from "@/components/ui/Alert";
+import { Button } from "@/components/admin/ui/Button";
+import { Alert } from "@/components/admin/ui/Alert";
 
 export function QualifyLeadButton({ leadId }: { leadId: string }) {
   const router = useRouter();

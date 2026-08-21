@@ -4,8 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { assignProjectClientAction } from "@/lib/actions/admin-projects";
 import { useServerAction } from "@/lib/hooks/useServerAction";
-import { Button } from "@/components/ui/Button";
-import { Alert } from "@/components/ui/Alert";
+import { Button } from "@/components/admin/ui/Button";
+import { Alert } from "@/components/admin/ui/Alert";
 
 interface AssignClientControlProps {
   projectId: string;
@@ -30,7 +30,7 @@ export function AssignClientControl({ projectId, currentClientId, clients }: Ass
       <select
         value={clientId}
         onChange={(e) => setClientId(e.target.value)}
-        className="glass-input w-full rounded-lg px-3 py-2 text-sm"
+        className="border border-hairline bg-white text-charcoal-dark focus:outline-none focus:ring-2 focus:ring-crimson/40 focus:border-crimson w-full rounded-lg px-3 py-2 text-sm"
         aria-label="Assign client"
       >
         {clients.map((c) => (

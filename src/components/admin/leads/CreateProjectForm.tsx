@@ -4,10 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createProjectFromLeadAction } from "@/lib/actions/admin-leads";
 import { useServerAction } from "@/lib/hooks/useServerAction";
-import { FormField } from "@/components/ui/FormField";
-import { TextareaField } from "@/components/ui/Textarea";
-import { Button } from "@/components/ui/Button";
-import { Alert } from "@/components/ui/Alert";
+import { FormField } from "@/components/admin/ui/FormField";
+import { TextareaField } from "@/components/admin/ui/Textarea";
+import { Button } from "@/components/admin/ui/Button";
+import { Alert } from "@/components/admin/ui/Alert";
 
 interface CreateProjectFormProps {
   leadId: string;
@@ -48,7 +48,7 @@ export function CreateProjectForm({ leadId, defaultTitle, staff }: CreateProject
         value={form.title}
         onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
       />
-      {fieldErrors.title && <p className="-mt-2 text-xs text-red-400">{fieldErrors.title}</p>}
+      {fieldErrors.title && <p className="-mt-2 text-xs text-red-600">{fieldErrors.title}</p>}
 
       <TextareaField
         id="projectDescription"
@@ -77,14 +77,14 @@ export function CreateProjectForm({ leadId, defaultTitle, staff }: CreateProject
       </div>
 
       <div>
-        <label htmlFor="projectManager" className="mb-1.5 block text-sm font-medium text-slate-300">
+        <label htmlFor="projectManager" className="mb-1.5 block text-sm font-medium text-charcoal">
           Project manager (optional)
         </label>
         <select
           id="projectManager"
           value={form.managerId}
           onChange={(e) => setForm((f) => ({ ...f, managerId: e.target.value }))}
-          className="glass-input w-full rounded-lg px-3.5 py-2.5 text-sm"
+          className="border border-hairline bg-white text-charcoal-dark focus:outline-none focus:ring-2 focus:ring-crimson/40 focus:border-crimson w-full rounded-lg px-3.5 py-2.5 text-sm"
         >
           <option value="">Unassigned</option>
           {staff.map((s) => (

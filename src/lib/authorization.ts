@@ -1,6 +1,6 @@
 import { prisma } from "./prisma";
 import { requireAuth, requireRole, type AuthSession } from "./auth";
-import type { Project } from "@prisma/client";
+import type { Project, Task } from "@prisma/client";
 
 /**
  * Resource-ownership checks.
@@ -129,4 +129,46 @@ export async function requireProjectManagementAccess(
   }
 
   return { session, project };
+}
+
+/**
+ * Can this session MANAGE (create/edit/delete) tasks belonging to the given
+ * project? Same rule as canManageProject() — a task is scoped to one
+ * project, so task authority follows project authority rather than
+ * introducing a separate, parallel rule:
+ *
+ * - ADMIN: always.
+ * - PROJECT_MANAGER: only if they manage this task's project (or it has no
+ *   manager yet).
+ * - TEAM_MEMBER / CLIENT: never — task management (create/edit/delete) is
+ *   distinct from being assigned a task to work on.
+ */
+export function canManageTask(session: AuthSession, project: Pick<Project, "managerId">): boolean {
+  return canManageProject(session, project);
+}
+
+/**
+ * Loads the task (with its project) and enforces canManageTask() above. Use
+ * this at the top of every task server action, independent of whatever page
+ * rendered the control that called it — same standing rule as
+ * requireProjectManagementAccess().
+ *
+ * Throws "NOT_FOUND" if the task doesn't exist, "FORBIDDEN" if it exists but
+ * this session isn't authorized to manage it.
+ */
+export async function requireTaskManagementAccess(
+  taskId: string
+): Promise<{ session: AuthSession; task: Task & { project: Project } }> {
+  const session = await requireRole(["ADMIN", "PROJECT_MANAGER"]);
+
+  const task = await prisma.task.findUnique({ where: { id: taskId }, include: { project: true } });
+  if (!task) {
+    throw new Error("NOT_FOUND");
+  }
+
+  if (!canManageTask(session, task.project)) {
+    throw new Error("FORBIDDEN");
+  }
+
+  return { session, task };
 }

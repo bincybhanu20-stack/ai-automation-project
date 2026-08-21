@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import { Pencil } from "lucide-react";
 import { updateLeadAction } from "@/lib/actions/admin-leads";
 import { useServerAction } from "@/lib/hooks/useServerAction";
-import { FormField } from "@/components/ui/FormField";
-import { TextareaField } from "@/components/ui/Textarea";
-import { Button } from "@/components/ui/Button";
-import { Alert } from "@/components/ui/Alert";
+import { FormField } from "@/components/admin/ui/FormField";
+import { TextareaField } from "@/components/admin/ui/Textarea";
+import { Button } from "@/components/admin/ui/Button";
+import { Alert } from "@/components/admin/ui/Alert";
 
 interface EditLeadFormProps {
   leadId: string;
@@ -52,13 +52,13 @@ export function EditLeadForm({ leadId, initial }: EditLeadFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-white/10 p-4">
+    <form onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-hairline p-4">
       {error && <Alert variant="error">{error}</Alert>}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <FormField id="editName" label="Name" value={form.name} onChange={(e) => update("name", e.target.value)} />
-          {fieldErrors.name && <p className="mt-1 text-xs text-red-400">{fieldErrors.name}</p>}
+          {fieldErrors.name && <p className="mt-1 text-xs text-red-600">{fieldErrors.name}</p>}
         </div>
         <div>
           <FormField
@@ -68,7 +68,7 @@ export function EditLeadForm({ leadId, initial }: EditLeadFormProps) {
             value={form.email}
             onChange={(e) => update("email", e.target.value)}
           />
-          {fieldErrors.email && <p className="mt-1 text-xs text-red-400">{fieldErrors.email}</p>}
+          {fieldErrors.email && <p className="mt-1 text-xs text-red-600">{fieldErrors.email}</p>}
         </div>
         <FormField id="editPhone" label="Phone" value={form.phone} onChange={(e) => update("phone", e.target.value)} />
         <FormField
@@ -99,7 +99,7 @@ export function EditLeadForm({ leadId, initial }: EditLeadFormProps) {
           value={form.message}
           onChange={(e) => update("message", e.target.value)}
         />
-        {fieldErrors.message && <p className="mt-1 text-xs text-red-400">{fieldErrors.message}</p>}
+        {fieldErrors.message && <p className="mt-1 text-xs text-red-600">{fieldErrors.message}</p>}
       </div>
 
       <div className="flex gap-2">

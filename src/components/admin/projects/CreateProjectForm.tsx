@@ -4,11 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createProjectAction } from "@/lib/actions/admin-projects";
 import { useServerAction } from "@/lib/hooks/useServerAction";
-import { FormField } from "@/components/ui/FormField";
-import { TextareaField } from "@/components/ui/Textarea";
-import { SelectField } from "@/components/ui/Select";
-import { Button } from "@/components/ui/Button";
-import { Alert } from "@/components/ui/Alert";
+import { FormField } from "@/components/admin/ui/FormField";
+import { TextareaField } from "@/components/admin/ui/Textarea";
+import { SelectField } from "@/components/admin/ui/Select";
+import { Button } from "@/components/admin/ui/Button";
+import { Alert } from "@/components/admin/ui/Alert";
 
 const STATUS_OPTIONS = ["PLANNING", "ACTIVE", "ON_HOLD", "COMPLETED", "CANCELLED"] as const;
 const PRIORITY_OPTIONS = ["LOW", "MEDIUM", "HIGH", "URGENT"] as const;
@@ -59,7 +59,7 @@ export function CreateProjectForm({ clients, managerCandidates, showManagerPicke
   }
 
   return (
-    <form onSubmit={handleSubmit} className="glass-card space-y-5 rounded-xl p-6 sm:p-8" noValidate>
+    <form onSubmit={handleSubmit} className="rounded-xl border border-hairline bg-white space-y-5 p-6 shadow-sm sm:p-8" noValidate>
       {error && <Alert variant="error">{error}</Alert>}
 
       <div>
@@ -71,7 +71,7 @@ export function CreateProjectForm({ clients, managerCandidates, showManagerPicke
           onChange={(e) => update("title", e.target.value)}
           placeholder="Website Revamp"
         />
-        {fieldErrors.title && <p className="mt-1 text-xs text-red-400">{fieldErrors.title}</p>}
+        {fieldErrors.title && <p className="mt-1 text-xs text-red-600">{fieldErrors.title}</p>}
       </div>
 
       <TextareaField
@@ -84,14 +84,14 @@ export function CreateProjectForm({ clients, managerCandidates, showManagerPicke
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label htmlFor="clientId" className="mb-1.5 block text-sm font-medium text-slate-300">
+          <label htmlFor="clientId" className="mb-1.5 block text-sm font-medium text-charcoal">
             Client
           </label>
           <select
             id="clientId"
             value={form.clientId}
             onChange={(e) => update("clientId", e.target.value)}
-            className="glass-input w-full rounded-lg px-3.5 py-2.5 text-sm"
+            className="border border-hairline bg-white text-charcoal-dark focus:outline-none focus:ring-2 focus:ring-crimson/40 focus:border-crimson w-full rounded-lg px-3.5 py-2.5 text-sm"
           >
             {clients.map((c) => (
               <option key={c.id} value={c.id}>
@@ -99,19 +99,19 @@ export function CreateProjectForm({ clients, managerCandidates, showManagerPicke
               </option>
             ))}
           </select>
-          {fieldErrors.clientId && <p className="mt-1 text-xs text-red-400">{fieldErrors.clientId}</p>}
+          {fieldErrors.clientId && <p className="mt-1 text-xs text-red-600">{fieldErrors.clientId}</p>}
         </div>
 
         {showManagerPicker && (
           <div>
-            <label htmlFor="managerId" className="mb-1.5 block text-sm font-medium text-slate-300">
+            <label htmlFor="managerId" className="mb-1.5 block text-sm font-medium text-charcoal">
               Project manager (optional)
             </label>
             <select
               id="managerId"
               value={form.managerId}
               onChange={(e) => update("managerId", e.target.value)}
-              className="glass-input w-full rounded-lg px-3.5 py-2.5 text-sm"
+              className="border border-hairline bg-white text-charcoal-dark focus:outline-none focus:ring-2 focus:ring-crimson/40 focus:border-crimson w-full rounded-lg px-3.5 py-2.5 text-sm"
             >
               <option value="">Unassigned</option>
               {managerCandidates.map((m) => (

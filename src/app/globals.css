@@ -62,3 +62,91 @@ body {
   background: linear-gradient(135deg, #0369a1 0%, #4338ca 100%);
   box-shadow: 0 4px 20px rgba(79, 70, 229, 0.4);
 }
+
+/* =============================================================
+   PUBLIC MARKETING SITE THEME
+   Everything below is scoped under .public-site. The authenticated
+   app (admin/client/manager/auth pages) never renders that class,
+   so none of these rules can ever affect it — the dark theme above
+   stays exactly as it was.
+   ============================================================= */
+.public-site {
+  --pub-primary: #DE0000;
+  --pub-primary-hover: #B20000;
+  --pub-primary-light: #FFF1F1;
+  --pub-text: #4B4846;
+  --pub-text-dark: #2E2C2B;
+  --pub-text-muted: #777371;
+  --pub-bg: #FFFFFF;
+  --pub-bg-light: #F8F8F8;
+  --pub-border: #E8E6E5;
+
+  background: var(--pub-bg);
+  color: var(--pub-text);
+}
+
+.public-site .pub-gradient-bg {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(222, 0, 0, 0.06), transparent),
+    var(--pub-bg);
+}
+
+.public-site .pub-card {
+  background: var(--pub-bg);
+  border: 1px solid var(--pub-border);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.public-site .pub-card-hover:hover {
+  border-color: rgba(222, 0, 0, 0.25);
+  box-shadow: 0 12px 32px -8px rgba(43, 20, 20, 0.12);
+  transform: translateY(-2px);
+}
+
+.public-site .pub-focus:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(222, 0, 0, 0.25);
+  border-color: var(--pub-primary);
+}
+
+/* Line-draw animation for the hero's connected nodes — see HeroVisual.tsx.
+   Respects prefers-reduced-motion via the media query below. */
+.public-site .pub-flow-line {
+  stroke-dasharray: 6 6;
+  animation: pub-flow-dash 1.4s linear infinite;
+}
+
+@keyframes pub-flow-dash {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.public-site .pub-fade-up {
+  animation: pub-fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes pub-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-site .pub-flow-line {
+    animation: none;
+  }
+  .public-site .pub-fade-up {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  .public-site .pub-card-hover:hover {
+    transform: none;
+  }
+}

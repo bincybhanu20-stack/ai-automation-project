@@ -4,8 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { changeLeadStatusAction } from "@/lib/actions/admin-leads";
 import { useServerAction } from "@/lib/hooks/useServerAction";
-import { Button } from "@/components/ui/Button";
-import { Alert } from "@/components/ui/Alert";
+import { Button } from "@/components/admin/ui/Button";
+import { Alert } from "@/components/admin/ui/Alert";
 import type { LeadStatus } from "@prisma/client";
 
 const STATUS_OPTIONS: LeadStatus[] = ["NEW", "CONTACTED", "QUALIFIED", "PROPOSAL", "WON", "LOST"];
@@ -27,7 +27,7 @@ export function ChangeStatusControl({ leadId, currentStatus }: { leadId: string;
       <select
         value={status}
         onChange={(e) => setStatus(e.target.value as LeadStatus)}
-        className="glass-input w-full rounded-lg px-3 py-2 text-sm"
+        className="border border-hairline bg-white text-charcoal-dark focus:outline-none focus:ring-2 focus:ring-crimson/40 focus:border-crimson w-full rounded-lg px-3 py-2 text-sm"
         aria-label="Lead status"
       >
         {STATUS_OPTIONS.map((s) => (

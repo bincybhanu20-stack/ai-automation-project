@@ -3,10 +3,10 @@ import Link from "next/link";
 import { UserPlus } from "lucide-react";
 import { requireAdmin } from "@/lib/admin-guard";
 import { getLeads, getAssignableStaff } from "@/lib/services/admin/leads";
-import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/Table";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { Pagination } from "@/components/ui/Pagination";
+import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/admin/ui/Table";
+import { StatusBadge } from "@/components/admin/ui/StatusBadge";
+import { EmptyState } from "@/components/admin/ui/EmptyState";
+import { Pagination } from "@/components/admin/ui/Pagination";
 import { LeadsFilterBar } from "@/components/admin/leads/LeadsFilterBar";
 import { formatDate } from "@/lib/utils";
 
@@ -59,8 +59,8 @@ export default async function AdminLeadsPage({ searchParams }: PageProps) {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">Leads</h1>
-          <p className="mt-1 text-sm text-slate-400">{total} total</p>
+          <h1 className="text-2xl font-bold text-charcoal-dark">Leads</h1>
+          <p className="mt-1 text-sm text-charcoal-muted">{total} total</p>
         </div>
       </div>
 
@@ -100,17 +100,17 @@ export default async function AdminLeadsPage({ searchParams }: PageProps) {
               {leads.map((lead) => (
                 <Tr key={lead.id}>
                   <Td>
-                    <Link href={`/admin/leads/${lead.id}`} className="font-medium text-slate-100 hover:text-sky-400">
+                    <Link href={`/admin/leads/${lead.id}`} className="font-medium text-charcoal-dark hover:text-sky-600">
                       {lead.name}
                     </Link>
-                    <p className="text-xs text-slate-500">{lead.company || lead.email}</p>
+                    <p className="text-xs text-charcoal-muted">{lead.company || lead.email}</p>
                   </Td>
                   <Td>
                     <StatusBadge value={lead.status} />
                   </Td>
                   <Td>{lead.source.replace(/_/g, " ")}</Td>
-                  <Td>{lead.assignedTo?.name ?? <span className="text-slate-600">Unassigned</span>}</Td>
-                  <Td>{lead.qualificationScore ?? <span className="text-slate-600">—</span>}</Td>
+                  <Td>{lead.assignedTo?.name ?? <span className="text-charcoal-muted">Unassigned</span>}</Td>
+                  <Td>{lead.qualificationScore ?? <span className="text-charcoal-muted">—</span>}</Td>
                   <Td>{formatDate(lead.createdAt)}</Td>
                 </Tr>
               ))}

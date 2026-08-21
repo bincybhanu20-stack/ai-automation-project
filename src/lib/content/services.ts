@@ -1,53 +1,87 @@
-import { Code2, Users2, Workflow, Sparkles, LifeBuoy, HelpCircle } from "lucide-react";
-import { SERVICE_OPTIONS } from "@/lib/validations/leads";
+import {
+  MonitorSmartphone,
+  Globe,
+  ShoppingCart,
+  RefreshCw,
+  Search,
+  Megaphone,
+  Target,
+  Share2,
+  Wrench,
+} from "lucide-react";
 
 /**
- * Display content for each service, keyed to the SAME string values used by
- * SERVICE_OPTIONS (src/lib/validations/leads.ts) — the lead form's dropdown
- * and this marketing copy can never drift apart into different service
- * names, because both read from that one list.
+ * Single source of truth for Elicpesoftware's services — used by the
+ * homepage service preview cards and the /services page's detailed
+ * sections. Each `id` doubles as the anchor used by footer links
+ * (e.g. /services#website-development).
  */
 export const SERVICES = [
   {
-    name: SERVICE_OPTIONS[0], // "Web & App Development"
-    icon: Code2,
-    summary: "Fast, responsive web and application interfaces built on modern frameworks.",
-    description:
-      "From marketing sites to full internal tools, we design and build interfaces that are fast, accessible, and easy for your team to maintain.",
+    id: "website-development",
+    name: "Website Development",
+    icon: MonitorSmartphone,
+    description: "Build professional, responsive and high-performing business websites.",
+    includes: ["Business Websites", "Corporate Websites", "Custom Websites", "Responsive Development", "CMS Development"],
   },
   {
-    name: SERVICE_OPTIONS[1], // "Client Management Systems"
-    icon: Users2,
-    summary: "Purpose-built CRMs that track leads, clients, projects and tasks in one place.",
-    description:
-      "Replace scattered spreadsheets with a single system: lead pipeline, client records, project tracking and role-based access for your whole team.",
+    id: "wordpress-development",
+    name: "WordPress Development",
+    icon: Globe,
+    description: "Create flexible WordPress websites tailored to business requirements.",
+    includes: ["Custom WordPress Development", "Theme Customization", "Plugin Development", "Elementor", "API Integrations", "WordPress Maintenance"],
   },
   {
-    name: SERVICE_OPTIONS[2], // "Workflow Automation (n8n)"
-    icon: Workflow,
-    summary: "Automated notifications, reminders and handoffs so nothing slips through.",
-    description:
-      "We design n8n workflows that react to real events in your system — new leads, approaching deadlines, status changes — and handle the busywork automatically.",
+    id: "ecommerce-development",
+    name: "E-commerce Development",
+    icon: ShoppingCart,
+    description: "Build user-friendly online stores.",
+    includes: ["WooCommerce", "Product Management", "Payment Integration", "Shipping Integration", "E-commerce Optimization", "Conversion Optimization"],
   },
   {
-    name: SERVICE_OPTIONS[3], // "AI-Powered Lead Qualification"
-    icon: Sparkles,
-    summary: "Automatically score and summarize inbound leads as they arrive.",
-    description:
-      "Every inquiry is analyzed for intent and fit the moment it's submitted, so your team spends time on the conversations most likely to convert.",
+    id: "website-redesign",
+    name: "Website Redesign",
+    icon: RefreshCw,
+    description: "Modernize existing websites.",
+    includes: ["UI/UX Improvements", "Responsive Design", "Performance Optimization", "Conversion Optimization", "Content Structure", "Technical Improvements"],
   },
   {
-    name: SERVICE_OPTIONS[4], // "Ongoing Support & Maintenance"
-    icon: LifeBuoy,
-    summary: "Continued monitoring, updates and improvements after launch.",
-    description:
-      "Software needs upkeep. We handle dependency updates, monitoring and incremental improvements so your system stays reliable long after launch day.",
+    id: "seo",
+    name: "SEO",
+    icon: Search,
+    description: "Improve search visibility and organic growth.",
+    includes: ["Technical SEO", "On-Page SEO", "Local SEO", "Keyword Strategy", "Content Optimization", "SEO Audits", "Performance Monitoring"],
   },
   {
-    name: SERVICE_OPTIONS[5], // "Other"
-    icon: HelpCircle,
-    summary: "Have something else in mind? Tell us about it.",
-    description:
-      "Every business is different. If your project doesn't fit neatly into the categories above, describe it in the form and we'll get back to you.",
+    id: "digital-marketing",
+    name: "Digital Marketing",
+    icon: Megaphone,
+    description: "Create strategies that connect businesses with their target audience.",
+    includes: ["Digital Strategy", "Lead Generation", "Content Marketing", "Campaign Management", "Conversion Optimization", "Analytics"],
+  },
+  {
+    id: "google-ads-ppc",
+    name: "Google Ads & PPC",
+    icon: Target,
+    description: "Drive targeted traffic through paid advertising.",
+    includes: ["Search Ads", "Display Ads", "Campaign Setup", "Keyword Research", "Conversion Tracking", "Campaign Optimization"],
+  },
+  {
+    id: "social-media-marketing",
+    name: "Social Media Marketing",
+    icon: Share2,
+    description: "Build stronger online brand visibility.",
+    includes: ["Social Media Strategy", "Content Planning", "Campaigns", "Audience Engagement", "Performance Analysis"],
+  },
+  {
+    id: "website-maintenance",
+    name: "Website Maintenance",
+    icon: Wrench,
+    description: "Keep websites secure, updated and performing well.",
+    includes: ["Updates", "Security", "Backups", "Bug Fixes", "Performance Optimization", "Content Updates"],
   },
 ] as const;
+
+export function getServiceById(id: string) {
+  return SERVICES.find((s) => s.id === id);
+}

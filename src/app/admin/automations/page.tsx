@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import { Workflow } from "lucide-react";
 import { requireAdmin } from "@/lib/admin-guard";
 import { getAutomationRuns } from "@/lib/services/admin/automations";
-import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/Table";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { Pagination } from "@/components/ui/Pagination";
+import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/admin/ui/Table";
+import { StatusBadge } from "@/components/admin/ui/StatusBadge";
+import { EmptyState } from "@/components/admin/ui/EmptyState";
+import { Pagination } from "@/components/admin/ui/Pagination";
 import Link from "next/link";
 import { cn, formatDate } from "@/lib/utils";
+import { MODULE_ACCENTS } from "@/lib/admin-module-colors";
 
 export async function generateMetadata(): Promise<Metadata> {
   await requireAdmin();
@@ -30,8 +31,8 @@ export default async function AdminAutomationsPage({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-slate-100">Automations</h1>
-      <p className="mt-1 text-sm text-slate-400">{total} logged runs</p>
+      <h1 className="text-2xl font-bold text-charcoal-dark">Automations</h1>
+      <p className="mt-1 text-sm text-charcoal-muted">{total} logged runs</p>
 
       <div className="my-6 flex flex-wrap gap-2">
         <FilterChip label="All" href="/admin/automations" active={!status} />
@@ -62,13 +63,13 @@ export default async function AdminAutomationsPage({
             <Tbody>
               {runs.map((run) => (
                 <Tr key={run.id}>
-                  <Td className="font-medium text-slate-100">{run.workflowName}</Td>
+                  <Td className="font-medium text-charcoal-dark">{run.workflowName}</Td>
                   <Td>
                     {run.entityType}
                     {run.entityType === "Lead" && run.entityId && (
                       <>
                         {" "}
-                        <Link href={`/admin/leads/${run.entityId}`} className="text-sky-400 hover:text-sky-300">
+                        <Link href={`/admin/leads/${run.entityId}`} className="text-crimson hover:text-crimson-hover">
                           (view)
                         </Link>
                       </>
@@ -77,7 +78,7 @@ export default async function AdminAutomationsPage({
                   <Td>
                     <StatusBadge value={run.status} />
                   </Td>
-                  <Td className={cn("max-w-xs truncate", run.errorMessage && "text-red-400")}>
+                  <Td className={cn("max-w-xs truncate", run.errorMessage && "text-red-600")}>
                     {run.errorMessage ?? "—"}
                   </Td>
                   <Td>{formatDate(run.startedAt)}</Td>
@@ -104,8 +105,8 @@ function FilterChip({ label, href, active }: { label: string; href: string; acti
       className={cn(
         "rounded-full border px-3 py-1 text-xs font-medium",
         active
-          ? "border-sky-500/30 bg-sky-500/10 text-sky-300"
-          : "border-white/10 text-slate-400 hover:text-slate-100"
+          ? `border-cyan-300 ${MODULE_ACCENTS.cyan.bg} ${MODULE_ACCENTS.cyan.text}`
+          : "border-hairline text-charcoal-muted hover:text-charcoal-dark"
       )}
     >
       {label}
