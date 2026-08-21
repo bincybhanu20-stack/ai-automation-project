@@ -1,0 +1,50 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# next.js build output
+/.next/
+/out/
+next-env.d.ts
+
+# production
+/build
+
+# environment variables — NEVER commit these
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# local database files (we use PostgreSQL now)
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# testing
+/coverage
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# os files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# editor
+.idea/
+.vscode/*
+!.vscode/extensions.json
