@@ -180,6 +180,7 @@ model User {
   auditLogs          AuditLog[]
   verificationTokens VerificationToken[]
   leadNotes          LeadNote[]
+  projectMessages    ProjectMessage[]
 
   @@index([role])
   @@index([status])
@@ -343,13 +344,60 @@ model Project {
   originatingLeadId String? @unique
   originatingLead   Lead?   @relation("LeadProject", fields: [originatingLeadId], references: [id], onDelete: SetNull)
 
-  tasks     Task[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  tasks      Task[]
+  milestones Milestone[]
+  messages   ProjectMessage[]
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
 
   @@index([clientId])
   @@index([status])
   @@index([managerId])
+}
+
+// ---------------------------------------------------------------------------
+// Milestone — key checkpoints within a project, shown on the client portal
+// ---------------------------------------------------------------------------
+
+model Milestone {
+  id          String    @id @default(uuid())
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  dueDate     DateTime?
+  completedAt DateTime?
+  // Explicit display order rather than relying on createdAt — milestones
+  // are usually planned in a specific sequence that isn't necessarily
+  // creation order (e.g. added out of order, then reordered).
+  order       Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId, order])
+}
+
+// ---------------------------------------------------------------------------
+// ProjectMessage — the "controlled project messages/requests" channel
+// between a client and the team, per project
+// ---------------------------------------------------------------------------
+
+model ProjectMessage {
+  id        String  @id @default(uuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Nullable + SetNull: a message must survive its author's account being
+  // removed, same reasoning as AuditLog.userId and LeadNote.authorId.
+  authorId String?
+  author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  body String
+
+  createdAt DateTime @default(now())
+
+  @@index([projectId, createdAt])
 }
 
 // ---------------------------------------------------------------------------

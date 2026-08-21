@@ -1,5 +1,10 @@
 import { prisma } from "@/lib/prisma";
 
+/**
+ * Scoped entirely by userId, not by role — used by BOTH the admin dashboard
+ * and the client portal. Lives here (not under services/admin/) because
+ * "a user's own notifications" isn't an admin concept, it's a shared one.
+ */
 export const NOTIFICATIONS_PAGE_SIZE = 20;
 
 export async function getNotificationsForUser(userId: string, page = 1) {
@@ -23,6 +28,15 @@ export async function getNotificationsForUser(userId: string, page = 1) {
     page: currentPage,
     totalPages: Math.max(1, Math.ceil(total / NOTIFICATIONS_PAGE_SIZE)),
   };
+}
+
+/** Recent notifications for a compact dashboard widget — no pagination. */
+export async function getRecentNotifications(userId: string, limit = 5) {
+  return prisma.notification.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+  });
 }
 
 /** Ownership-checked: a user can only mark THEIR OWN notification read —

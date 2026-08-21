@@ -3,10 +3,10 @@ import Link from "next/link";
 import { UserPlus } from "lucide-react";
 import { requireAdmin } from "@/lib/admin-guard";
 import { getLeads, getAssignableStaff } from "@/lib/services/admin/leads";
-import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/admin/Table";
-import { StatusBadge } from "@/components/admin/StatusBadge";
-import { EmptyState } from "@/components/admin/EmptyState";
-import { Pagination } from "@/components/admin/Pagination";
+import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/Table";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Pagination } from "@/components/ui/Pagination";
 import { LeadsFilterBar } from "@/components/admin/leads/LeadsFilterBar";
 import { formatDate } from "@/lib/utils";
 

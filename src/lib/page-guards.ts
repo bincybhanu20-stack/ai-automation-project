@@ -32,7 +32,7 @@ export async function requireRoleForPage(roles: Role[]): Promise<AuthSession> {
  * that id exists at all, only that they can't see it.
  *
  * Wrapped in React's cache() so calling it from BOTH generateMetadata() and
- * the page body (see src/app/portal/projects/[id]/page.tsx) only runs the
+ * the page body (see src/app/client/projects/[id]/page.tsx) only runs the
  * actual database query once per request — cache() dedupes by arguments
  * within a single render pass.
  *

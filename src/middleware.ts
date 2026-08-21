@@ -90,5 +90,5 @@ export const config = {
   // Only run on the paths that actually need it. Static assets, images and
   // the Next.js internals are excluded for performance — they're never
   // protected routes.
-  matcher: ["/admin/:path*", "/manager/:path*", "/portal/:path*", "/login"],
+  matcher: ["/admin/:path*", "/manager/:path*", "/client/:path*", "/login"],
 };

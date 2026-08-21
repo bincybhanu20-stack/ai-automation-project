@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import {
   UserPlus,
   Sparkles,
@@ -9,7 +9,7 @@ import {
   Workflow,
   BadgeCheck,
 } from "lucide-react";
-import { StatCard } from "@/components/admin/StatCard";
+import { StatCard } from "@/components/ui/StatCard";
 import { requireAdmin } from "@/lib/admin-guard";
 import { getDashboardStats } from "@/lib/services/admin/dashboard";
 

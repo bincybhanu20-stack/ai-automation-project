@@ -7,9 +7,10 @@ interface EmptyStateProps {
   description?: string;
 }
 
-/** Reusable "nothing here" state for every admin list page — distinct from
- * loading and error states, and from each other (e.g. "no leads yet" vs
- * "no leads match these filters"), per caller-provided copy. */
+/** Reusable "nothing here" state for every list page (admin and client
+ * portal) — distinct from loading and error states, and from each other
+ * (e.g. "no leads yet" vs "no leads match these filters"), per
+ * caller-provided copy. */
 export function EmptyState({ icon: Icon = Inbox, title, description }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-white/10 px-6 py-16 text-center">

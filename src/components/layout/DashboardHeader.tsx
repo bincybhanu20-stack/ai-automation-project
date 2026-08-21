@@ -6,7 +6,9 @@ interface DashboardHeaderProps {
   userRole: string;
 }
 
-/** Shared header for the three protected dashboards (/admin, /manager, /portal). */
+/** Shared header for simple protected pages that don't have a dedicated
+ * layout shell of their own (currently /manager — /admin and /client each
+ * have their own layout.tsx with a richer header/sidebar). */
 export function DashboardHeader({ title, userName, userRole }: DashboardHeaderProps) {
   return (
     <div className="mb-8 flex items-center justify-between gap-4">

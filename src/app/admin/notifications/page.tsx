@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { Bell } from "lucide-react";
 import { requireAdmin } from "@/lib/admin-guard";
-import { getNotificationsForUser } from "@/lib/services/admin/notifications";
+import { getNotificationsForUser } from "@/lib/services/notifications";
 import { Card } from "@/components/ui/Card";
-import { EmptyState } from "@/components/admin/EmptyState";
-import { Pagination } from "@/components/admin/Pagination";
-import { StatusBadge } from "@/components/admin/StatusBadge";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Pagination } from "@/components/ui/Pagination";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { formatDate, cn } from "@/lib/utils";
 import { MarkReadButton, MarkAllReadButton } from "@/components/admin/notifications/NotificationActions";
 

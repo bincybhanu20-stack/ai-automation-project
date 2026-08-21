@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { ScrollText } from "lucide-react";
 import { requireAdmin } from "@/lib/admin-guard";
 import { getAuditLogs, getAuditLogEntityTypes } from "@/lib/services/admin/audit-logs";
-import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/admin/Table";
-import { EmptyState } from "@/components/admin/EmptyState";
-import { Pagination } from "@/components/admin/Pagination";
+import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/Table";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Pagination } from "@/components/ui/Pagination";
 import Link from "next/link";
 import { cn, formatDate } from "@/lib/utils";
 

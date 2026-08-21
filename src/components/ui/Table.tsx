@@ -3,10 +3,14 @@ import type { ReactNode } from "react";
 
 /**
  * Small composable table primitives rather than one generic <DataTable
- * columns={} data={} /> — every admin list page has different columns and
+ * columns={} data={} /> — every list page has different columns and
  * different per-row actions, so a render-prop-heavy generic component would
  * fight TypeScript more than it would save. These wrap plain <table>
  * elements with the app's consistent styling; each page composes them.
+ *
+ * Lives under components/ui/ (not components/admin/) because both the
+ * admin dashboard and the client portal use it — moved here once a second
+ * real consumer existed, not preemptively.
  */
 
 export function Table({ children }: { children: ReactNode }) {

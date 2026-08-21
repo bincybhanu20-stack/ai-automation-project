@@ -6,7 +6,7 @@ import { ArrowLeft, Sparkles } from "lucide-react";
 import { requireAdmin } from "@/lib/admin-guard";
 import { getLeadById, getAssignableStaff } from "@/lib/services/admin/leads";
 import { Card, CardHeader } from "@/components/ui/Card";
-import { StatusBadge } from "@/components/admin/StatusBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 import { formatDate } from "@/lib/utils";
 import { AssignLeadControl } from "@/components/admin/leads/AssignLeadControl";
 import { ChangeStatusControl } from "@/components/admin/leads/ChangeStatusControl";

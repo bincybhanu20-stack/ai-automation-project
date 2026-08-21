@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import { Workflow } from "lucide-react";
 import { requireAdmin } from "@/lib/admin-guard";
 import { getAutomationRuns } from "@/lib/services/admin/automations";
-import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/admin/Table";
-import { StatusBadge } from "@/components/admin/StatusBadge";
-import { EmptyState } from "@/components/admin/EmptyState";
-import { Pagination } from "@/components/admin/Pagination";
+import { Table, Thead, Tbody, Tr, Th, Td } from "@/components/ui/Table";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { Pagination } from "@/components/ui/Pagination";
 import Link from "next/link";
 import { cn, formatDate } from "@/lib/utils";
 

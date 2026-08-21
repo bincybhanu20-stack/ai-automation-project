@@ -26,6 +26,10 @@ const DEMO_TASK_ID = "00000000-0000-0000-0000-000000000104";
 const DEMO_NOTIFICATION_ID = "00000000-0000-0000-0000-000000000105";
 const DEMO_AUTOMATION_RUN_ID = "00000000-0000-0000-0000-000000000106";
 const DEMO_AUDIT_LOG_ID = "00000000-0000-0000-0000-000000000107";
+const DEMO_MILESTONE_1_ID = "00000000-0000-0000-0000-000000000108";
+const DEMO_MILESTONE_2_ID = "00000000-0000-0000-0000-000000000109";
+const DEMO_MILESTONE_3_ID = "00000000-0000-0000-0000-000000000110";
+const DEMO_PROJECT_MESSAGE_ID = "00000000-0000-0000-0000-000000000111";
 
 // A second client company + login, separate from Dana Reyes's account,
 // specifically so authorization tests can prove one client can't see
@@ -198,11 +202,62 @@ async function main() {
       priority: "HIGH",
       progress: 35,
       budget: 18000,
+      startDate: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
+      deadline: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000),
       clientId: existingClient.id,
       managerId: manager.id,
     },
   });
   console.log(`  project         ${project.title}`);
+
+  // --- Milestones for the client portal to display ---
+  await prisma.milestone.upsert({
+    where: { id: DEMO_MILESTONE_1_ID },
+    update: {},
+    create: {
+      id: DEMO_MILESTONE_1_ID,
+      projectId: project.id,
+      title: "Discovery and scope sign-off",
+      order: 0,
+      completedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+    },
+  });
+  await prisma.milestone.upsert({
+    where: { id: DEMO_MILESTONE_2_ID },
+    update: {},
+    create: {
+      id: DEMO_MILESTONE_2_ID,
+      projectId: project.id,
+      title: "Checkout flow implementation",
+      order: 1,
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    },
+  });
+  await prisma.milestone.upsert({
+    where: { id: DEMO_MILESTONE_3_ID },
+    update: {},
+    create: {
+      id: DEMO_MILESTONE_3_ID,
+      projectId: project.id,
+      title: "Launch",
+      order: 2,
+      dueDate: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000),
+    },
+  });
+  console.log(`  milestones      3 for ${project.title}`);
+
+  // --- A sample client message, demonstrating the portal's message thread ---
+  await prisma.projectMessage.upsert({
+    where: { id: DEMO_PROJECT_MESSAGE_ID },
+    update: {},
+    create: {
+      id: DEMO_PROJECT_MESSAGE_ID,
+      projectId: project.id,
+      authorId: clientUser.id,
+      body: "Can we get a preview link once the checkout flow is ready for review?",
+    },
+  });
+  console.log(`  project message 1 for ${project.title}`);
 
   // --- Task under that project, assigned to the team member ---
   const task = await prisma.task.upsert({

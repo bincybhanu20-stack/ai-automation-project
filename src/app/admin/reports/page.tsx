@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/admin-guard";
 import { getReportMetrics } from "@/lib/services/admin/reports";
 import { Card, CardHeader } from "@/components/ui/Card";
-import { StatusBadge } from "@/components/admin/StatusBadge";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 
 export async function generateMetadata(): Promise<Metadata> {
   await requireAdmin();

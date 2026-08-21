@@ -17,7 +17,7 @@ export function roleHomePath(role: Role): string {
     case "TEAM_MEMBER":
       return "/manager";
     case "CLIENT":
-      return "/portal";
+      return "/client";
   }
 }
 
@@ -32,5 +32,5 @@ export function roleHomePath(role: Role): string {
 export const ROUTE_ROLE_MAP: Array<{ prefix: string; roles: Role[] }> = [
   { prefix: "/admin", roles: ["ADMIN"] },
   { prefix: "/manager", roles: ["ADMIN", "PROJECT_MANAGER", "TEAM_MEMBER"] },
-  { prefix: "/portal", roles: ["CLIENT"] },
+  { prefix: "/client", roles: ["CLIENT"] },
 ];

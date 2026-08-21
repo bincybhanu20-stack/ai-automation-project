@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/auth";
-import * as notificationsService from "@/lib/services/admin/notifications";
+import * as notificationsService from "@/lib/services/notifications";
 
 export async function markNotificationReadAction(notificationId: string) {
   const session = await requireRole(["ADMIN"]);
