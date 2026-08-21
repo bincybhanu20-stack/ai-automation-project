@@ -3,9 +3,9 @@
  *
  * Run with:  npm run db:seed
  *
- * It is SAFE to run more than once. Every record uses `upsert`, which means
- * "update it if it exists, otherwise create it" — so you never get duplicates
- * and you never lose data you added manually.
+ * SAFE TO RUN MORE THAN ONCE. Every record is upserted — users by email,
+ * and the demo Lead/Client/Project/Task/Notification/AutomationRun/AuditLog
+ * by a fixed id declared below — so re-running never creates duplicates.
  *
  * Note: this file imports bcryptjs directly rather than src/lib/auth.ts,
  * because auth.ts imports next/headers which only works inside a running
@@ -16,6 +16,16 @@ import { PrismaClient, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
+
+// Fixed ids for demo records below, so re-running this script updates the
+// same rows instead of creating new ones each time.
+const DEMO_LEAD_ID = "00000000-0000-0000-0000-000000000101";
+const DEMO_CONVERTED_CLIENT_ID = "00000000-0000-0000-0000-000000000102";
+const DEMO_PROJECT_ID = "00000000-0000-0000-0000-000000000103";
+const DEMO_TASK_ID = "00000000-0000-0000-0000-000000000104";
+const DEMO_NOTIFICATION_ID = "00000000-0000-0000-0000-000000000105";
+const DEMO_AUTOMATION_RUN_ID = "00000000-0000-0000-0000-000000000106";
+const DEMO_AUDIT_LOG_ID = "00000000-0000-0000-0000-000000000107";
 
 // Development-only credentials. Change these before going to production.
 const SEED_USERS = [
@@ -48,13 +58,14 @@ const SEED_USERS = [
 async function main() {
   console.log("Seeding database…\n");
 
+  // --- Users ---
+  const users: Record<string, { id: string; email: string; role: Role }> = {};
+
   for (const user of SEED_USERS) {
-    // Hash the password — we never store plain text.
     const passwordHash = await bcrypt.hash(user.password, 10);
 
     const record = await prisma.user.upsert({
       where: { email: user.email },
-      // On re-run, refresh the name/role but keep the existing id.
       update: { name: user.name, role: user.role },
       create: {
         email: user.email,
@@ -64,15 +75,17 @@ async function main() {
       },
     });
 
-    console.log(`  user   ${record.email.padEnd(28)} ${record.role}`);
+    users[user.role] = record;
+    console.log(`  user            ${record.email.padEnd(28)} ${record.role}`);
   }
 
-  // Give the CLIENT user a client profile, so the Phase 6 portal has data.
-  const clientUser = await prisma.user.findUniqueOrThrow({
-    where: { email: "client@clientflow.local" },
-  });
+  const admin = users[Role.ADMIN];
+  const manager = users[Role.PROJECT_MANAGER];
+  const member = users[Role.TEAM_MEMBER];
+  const clientUser = users[Role.CLIENT];
 
-  const client = await prisma.client.upsert({
+  // --- Client (existing portal client, Dana Reyes) ---
+  const existingClient = await prisma.client.upsert({
     where: { userId: clientUser.id },
     update: {},
     create: {
@@ -83,8 +96,137 @@ async function main() {
       phone: "+971 50 000 0000",
     },
   });
+  console.log(`  client          ${existingClient.companyName}`);
 
-  console.log(`  client ${client.companyName}`);
+  // --- Lead (assigned to the manager, not yet converted) ---
+  const lead = await prisma.lead.upsert({
+    where: { id: DEMO_LEAD_ID },
+    update: {},
+    create: {
+      id: DEMO_LEAD_ID,
+      name: "Jordan Blake",
+      email: "jordan.blake@acme-robotics.example",
+      company: "Acme Robotics",
+      phone: "+971 55 111 2222",
+      source: "WEBSITE",
+      message:
+        "We need an automation platform to manage our client onboarding and project budget tracking.",
+      service: "Automation Platform",
+      budgetRange: "$10,000 - $25,000",
+      status: "QUALIFIED",
+      assignedToId: manager.id,
+      qualificationScore: 82,
+      qualificationSummary:
+        "High-priority opportunity. Client intent score 82/100. Strong commercial fit detected for automation workflows.",
+      qualificationReason:
+        'Rules engine adjusted score based on: mentions "automation", mentions "platform", mentions "budget", company name provided, detailed message.',
+      aiProcessedAt: new Date(),
+    },
+  });
+  console.log(`  lead            ${lead.name} (${lead.company})`);
+
+  // --- Convert the lead into a new client (no portal login yet) ---
+  const convertedClient = await prisma.client.upsert({
+    where: { id: DEMO_CONVERTED_CLIENT_ID },
+    update: {},
+    create: {
+      id: DEMO_CONVERTED_CLIENT_ID,
+      companyName: "Acme Robotics Ltd",
+      industry: "Robotics",
+      status: "ACTIVE",
+      email: lead.email,
+      phone: lead.phone,
+      // userId intentionally omitted: this client doesn't have a portal
+      // account yet. Demonstrates that Client.userId is optional.
+      convertedFromLeadId: lead.id,
+    },
+  });
+  console.log(`  client          ${convertedClient.companyName} (converted from lead, no login yet)`);
+
+  // --- Project for the existing (Dana Reyes) client, managed by the PM ---
+  const project = await prisma.project.upsert({
+    where: { id: DEMO_PROJECT_ID },
+    update: {},
+    create: {
+      id: DEMO_PROJECT_ID,
+      title: "Website Revamp",
+      description: "Redesign the storefront and integrate the new checkout flow.",
+      status: "ACTIVE",
+      priority: "HIGH",
+      progress: 35,
+      budget: 18000,
+      clientId: existingClient.id,
+      managerId: manager.id,
+    },
+  });
+  console.log(`  project         ${project.title}`);
+
+  // --- Task under that project, assigned to the team member ---
+  const task = await prisma.task.upsert({
+    where: { id: DEMO_TASK_ID },
+    update: {},
+    create: {
+      id: DEMO_TASK_ID,
+      title: "Implement checkout flow",
+      description: "Build the new multi-step checkout with payment provider integration.",
+      status: "IN_PROGRESS",
+      priority: "HIGH",
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      projectId: project.id,
+      assigneeId: member.id,
+      creatorId: manager.id,
+    },
+  });
+  console.log(`  task            ${task.title}`);
+
+  // --- Notification for the admin about the new lead ---
+  const notification = await prisma.notification.upsert({
+    where: { id: DEMO_NOTIFICATION_ID },
+    update: {},
+    create: {
+      id: DEMO_NOTIFICATION_ID,
+      userId: admin.id,
+      title: "New lead qualified",
+      message: `${lead.name} from ${lead.company} was auto-qualified with a score of ${lead.qualificationScore}.`,
+      type: "SUCCESS",
+      entityType: "Lead",
+      entityId: lead.id,
+    },
+  });
+  console.log(`  notification    ${notification.title}`);
+
+  // --- AutomationRun recording a simulated n8n execution ---
+  const automationRun = await prisma.automationRun.upsert({
+    where: { id: DEMO_AUTOMATION_RUN_ID },
+    update: {},
+    create: {
+      id: DEMO_AUTOMATION_RUN_ID,
+      workflowName: "lead-qualified-notification",
+      entityType: "Lead",
+      entityId: lead.id,
+      executionId: "n8n-exec-demo-0001",
+      status: "SUCCESS",
+      idempotencyKey: `lead-qualified-${lead.id}`,
+      completedAt: new Date(),
+    },
+  });
+  console.log(`  automation run  ${automationRun.workflowName} -> ${automationRun.status}`);
+
+  // --- AuditLog recording the qualification action ---
+  const auditLog = await prisma.auditLog.upsert({
+    where: { id: DEMO_AUDIT_LOG_ID },
+    update: {},
+    create: {
+      id: DEMO_AUDIT_LOG_ID,
+      userId: manager.id,
+      action: "LEAD_QUALIFIED",
+      entity: "Lead",
+      entityId: lead.id,
+      metadata: { oldStatus: "NEW", newStatus: "QUALIFIED", score: lead.qualificationScore },
+      ipAddress: "127.0.0.1",
+    },
+  });
+  console.log(`  audit log       ${auditLog.action}`);
 
   console.log("\nSeed complete.\n");
   console.log("Login credentials (development only):");
@@ -96,7 +238,6 @@ async function main() {
 main()
   .catch((error) => {
     console.error("Seed failed:", error);
-    // Non-zero exit code tells npm the script failed.
     process.exit(1);
   })
   .finally(async () => {

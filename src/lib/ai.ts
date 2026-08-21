@@ -1,9 +1,22 @@
+/**
+ * AI lead qualification.
+ *
+ * Field names here match the Lead model exactly (qualificationScore,
+ * qualificationSummary, qualificationReason, aiProcessedAt) so a caller can
+ * spread the result straight into a Prisma update:
+ *
+ *   const result = await qualifyLeadAI(lead);
+ *   await prisma.lead.update({ where: { id: lead.id }, data: result });
+ */
+
 export interface LeadQualificationResult {
-  aiQualified: boolean;
-  aiScore: number; // 0 - 100
-  aiSummary: string;
-  aiSuggestedRole: string;
-  status: "QUALIFIED" | "QUALIFYING" | "DISQUALIFIED";
+  qualificationScore: number; // 0-100
+  qualificationSummary: string; // one-paragraph human-readable summary
+  qualificationReason: string; // why the AI reached this score
+  aiProcessedAt: Date;
+  // AI only ever suggests these three LeadStatus values — PROPOSAL/WON are
+  // human decisions the AI shouldn't make.
+  suggestedStatus: "CONTACTED" | "QUALIFIED" | "LOST";
 }
 
 export async function qualifyLeadAI(lead: {
@@ -29,7 +42,7 @@ export async function qualifyLeadAI(lead: {
             {
               role: "system",
               content:
-                "You are an AI Lead Scoring Analyst. Analyze lead inquiries for business fit, intent, urgency, and company credibility. Return JSON format strictly: { \"aiQualified\": boolean, \"aiScore\": number (0-100), \"aiSummary\": string, \"aiSuggestedRole\": string, \"status\": \"QUALIFIED\" | \"QUALIFYING\" | \"DISQUALIFIED\" }",
+                "You are an AI Lead Scoring Analyst. Analyze lead inquiries for business fit, intent, urgency, and company credibility. Return JSON format strictly: { \"qualificationScore\": number (0-100), \"qualificationSummary\": string, \"qualificationReason\": string, \"suggestedStatus\": \"CONTACTED\" | \"QUALIFIED\" | \"LOST\" }",
             },
             {
               role: "user",
@@ -44,12 +57,13 @@ export async function qualifyLeadAI(lead: {
       if (response.ok) {
         const data = await response.json();
         const content = JSON.parse(data.choices[0].message.content);
+        const score = Math.min(100, Math.max(0, Number(content.qualificationScore) || 50));
         return {
-          aiQualified: Boolean(content.aiQualified),
-          aiScore: Math.min(100, Math.max(0, Number(content.aiScore) || 50)),
-          aiSummary: content.aiSummary || "Lead analyzed via OpenAI engine.",
-          aiSuggestedRole: content.aiSuggestedRole || "Potential Enterprise Client",
-          status: content.status || (content.aiScore >= 70 ? "QUALIFIED" : "QUALIFYING"),
+          qualificationScore: score,
+          qualificationSummary: content.qualificationSummary || "Lead analyzed via OpenAI engine.",
+          qualificationReason: content.qualificationReason || "Automated scoring based on message content.",
+          aiProcessedAt: new Date(),
+          suggestedStatus: content.suggestedStatus || (score >= 70 ? "QUALIFIED" : score >= 40 ? "CONTACTED" : "LOST"),
         };
       }
     } catch (err) {
@@ -60,30 +74,39 @@ export async function qualifyLeadAI(lead: {
   // Intelligent Fallback AI Qualification Engine (Deterministic Natural Language Processing Rules)
   let score = 50;
   const text = `${lead.name} ${lead.company || ""} ${lead.message}`.toLowerCase();
-  
+  const reasons: string[] = [];
+
   // Keyword intent signals
   const highIntentKeywords = ["budget", "enterprise", "automation", "project", "urgency", "implementation", "n8n", "ai", "platform", "saas", "client"];
   const lowIntentKeywords = ["free", "spam", "test", "demo only", "cheap"];
 
   highIntentKeywords.forEach((kw) => {
-    if (text.includes(kw)) score += 8;
+    if (text.includes(kw)) {
+      score += 8;
+      reasons.push(`mentions "${kw}"`);
+    }
   });
 
   lowIntentKeywords.forEach((kw) => {
-    if (text.includes(kw)) score -= 15;
+    if (text.includes(kw)) {
+      score -= 15;
+      reasons.push(`low-intent keyword "${kw}"`);
+    }
   });
 
   if (lead.company && lead.company.trim().length > 2) {
     score += 15;
+    reasons.push("company name provided");
   }
 
   if (lead.message.length > 80) {
     score += 10;
+    reasons.push("detailed message");
   }
 
   score = Math.min(98, Math.max(15, score));
   const qualified = score >= 65;
-  const status = qualified ? "QUALIFIED" : score >= 40 ? "QUALIFYING" : "DISQUALIFIED";
+  const suggestedStatus = qualified ? "QUALIFIED" : score >= 40 ? "CONTACTED" : "LOST";
 
   const summary = qualified
     ? `High-priority opportunity. Client intent score ${score}/100. Strong commercial fit detected for automation workflows.`
@@ -91,11 +114,16 @@ export async function qualifyLeadAI(lead: {
     ? `Moderate prospect. Score ${score}/100. Requires sales follow-up to clarify project timeline.`
     : `Low alignment prospect. Score ${score}/100. Short message or budget constraint detected.`;
 
+  const reason =
+    reasons.length > 0
+      ? `Rules engine adjusted score based on: ${reasons.join(", ")}.`
+      : "Rules engine found no strong signals; baseline score applied.";
+
   return {
-    aiQualified: qualified,
-    aiScore: score,
-    aiSummary: summary,
-    aiSuggestedRole: qualified ? "Enterprise Client" : "Standard Lead",
-    status,
+    qualificationScore: score,
+    qualificationSummary: summary,
+    qualificationReason: reason,
+    aiProcessedAt: new Date(),
+    suggestedStatus,
   };
 }

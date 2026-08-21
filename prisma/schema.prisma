@@ -1,17 +1,41 @@
 // ClientFlow — Client Management & AI Automation Platform
 //
-// CHANGES FROM THE ORIGINAL SCHEMA (all deliberate, see notes):
-//  1. provider "sqlite" -> "postgresql"  (project requirement + Vercel)
-//  2. status/role/priority String fields -> real PostgreSQL enums.
-//     SQLite cannot do enums, so they were plain strings with a comment.
-//     Postgres enforces valid values at the DATABASE level, so a typo like
-//     "ACTVE" becomes impossible instead of silently corrupting data.
-//  3. Added fields required by the spec docs but missing from the model.
-//  4. Added AutomationRun (docs/03 "automation_runs") — the existing
-//     N8nAutomation model stores workflow CONFIG, not execution HISTORY.
-//  5. Added @@index on frequently filtered columns (docs/03 requirement).
+// Core database layer. Every model below maps to one of the 8 required
+// entities: User, Client, Lead, Project, Task, Notification, AutomationRun,
+// AuditLog.
 //
-// No models or fields were removed.
+// DESIGN DECISIONS beyond the literal spec (each is a correctness fix, not
+// scope creep):
+//
+//  1. Client.userId is OPTIONAL, not required.
+//     A client company can exist before anyone creates them a portal login
+//     (e.g. admin enters a new client manually). "belongs to a user where
+//     applicable" in the spec means exactly this — make it optional.
+//
+//  2. User -> Client relation uses onDelete: SetNull, not Cascade.
+//     The previous schema cascaded: delete a User -> delete their Client ->
+//     delete all their Projects -> delete all Tasks. One accidental user
+//     deletion would silently destroy a client's entire project history.
+//     SetNull detaches the portal login but keeps the business record intact.
+//
+//  3. Lead has TWO relations to Client, not one:
+//       - clientId          : an EXISTING client this lead is tied to
+//                              (repeat/upsell business). Many-to-one — a
+//                              client can have many historical leads.
+//       - (Client.convertedFromLeadId) : the ONE lead that originated this
+//                              client via conversion. One-to-one.
+//     This satisfies both "Lead can optionally convert into a client" AND
+//     "Client can have multiple leads historically" without conflating them.
+//
+//  4. LeadSource is a real enum, not a free-text string.
+//     The spec says "stores source ... information" and asks for "proper
+//     enum values" throughout — a free-text source field lets "website",
+//     "Website", "web site" all exist as different values, which breaks
+//     reporting by source (a named requirement of this platform).
+//
+// N8nAutomation (workflow configuration) is intentionally NOT part of this
+// schema — it belongs to the automation module, not the core data layer, and
+// wasn't in the required-entities list.
 
 datasource db {
   provider = "postgresql"
@@ -38,17 +62,22 @@ enum UserStatus {
   SUSPENDED
 }
 
-// Lifecycle from docs/08: New -> Contacted -> Qualified -> Proposal -> Won/Lost
+enum LeadSource {
+  WEBSITE
+  REFERRAL
+  API
+  MANUAL
+  N8N_WEBHOOK
+  OTHER
+}
+
 enum LeadStatus {
   NEW
   CONTACTED
-  QUALIFYING
   QUALIFIED
   PROPOSAL
   WON
   LOST
-  DISQUALIFIED
-  CONVERTED
 }
 
 enum ClientStatus {
@@ -57,7 +86,6 @@ enum ClientStatus {
   ARCHIVED
 }
 
-// Lifecycle from docs/09: Planning -> Active -> On Hold -> Completed/Cancelled
 enum ProjectStatus {
   PLANNING
   ACTIVE
@@ -66,12 +94,11 @@ enum ProjectStatus {
   CANCELLED
 }
 
-// Lifecycle from docs/10: Todo -> In Progress -> Review -> Completed
 enum TaskStatus {
   TODO
   IN_PROGRESS
   REVIEW
-  DONE
+  COMPLETED
 }
 
 enum Priority {
@@ -96,7 +123,7 @@ enum AutomationRunStatus {
 }
 
 // ---------------------------------------------------------------------------
-// Models
+// User
 // ---------------------------------------------------------------------------
 
 model User {
@@ -109,75 +136,52 @@ model User {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
-  clientProfile   Client?
-  assignedTasks   Task[]         @relation("AssignedUserTasks")
-  createdTasks    Task[]         @relation("CreatedUserTasks")
-  assignedLeads   Lead[]         @relation("AssignedUserLeads")
-  managedProjects Project[]      @relation("ProjectManager")
-  notifications   Notification[]
-  auditLogs       AuditLog[]
+  // one client profile "where applicable" — not every user is a client
+  clientProfile Client?
+
+  // leads this user manages
+  assignedLeads Lead[] @relation("AssignedUserLeads")
+
+  // projects this user manages as project manager
+  managedProjects Project[] @relation("ProjectManager")
+
+  // tasks assigned to this user
+  assignedTasks Task[] @relation("AssignedUserTasks")
+  createdTasks  Task[] @relation("CreatedUserTasks")
+
+  notifications Notification[]
+  auditLogs     AuditLog[]
 
   @@index([role])
   @@index([status])
 }
 
-model Lead {
-  id      String  @id @default(uuid())
-  name    String
-  email   String
-  company String?
-  phone   String?
-  source  String  @default("Website Intake")
-  message String
-
-  // Added per docs/05 (lead form collects service + budget range).
-  service     String?
-  budgetRange String?
-
-  status LeadStatus @default(NEW)
-
-  // Staff member responsible for this lead (docs/08 "assignment").
-  assignedToId String?
-  assignedTo   User?   @relation("AssignedUserLeads", fields: [assignedToId], references: [id], onDelete: SetNull)
-
-  // --- AI qualification (docs/12) ---
-  aiQualified     Boolean @default(false)
-  aiScore         Int     @default(0)
-  aiSummary       String?
-  aiSuggestedRole String?
-
-  // --- n8n metadata (docs/11) ---
-  n8nSyncedAt    DateTime?
-  n8nExecutionId String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  convertedClient Client?
-
-  // Indexed because the admin lead list filters on these constantly.
-  @@index([status])
-  @@index([email])
-  @@index([assignedToId])
-  @@index([createdAt])
-}
+// ---------------------------------------------------------------------------
+// Client
+// ---------------------------------------------------------------------------
 
 model Client {
   id          String       @id @default(uuid())
   companyName String
   industry    String?
   status      ClientStatus @default(ACTIVE)
+  phone       String?
+  email       String?
+  address     String?
 
-  // Added per docs/03 (clients table has phone, email, address).
-  phone   String?
-  email   String?
-  address String?
+  // Optional: a client can exist before they have a portal login.
+  // onDelete: SetNull — deleting the login must never delete the business
+  // record or cascade into its projects/tasks.
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // The single lead that originated this client via conversion (if any).
+  convertedFromLeadId String? @unique
+  convertedFromLead   Lead?   @relation("LeadConversion", fields: [convertedFromLeadId], references: [id], onDelete: SetNull)
 
-  leadId String? @unique
-  lead   Lead?   @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  // All leads historically tied to this client (repeat business), including
+  // but not limited to the one that originated it.
+  leads Lead[] @relation("ClientLeads")
 
   projects  Project[]
   createdAt DateTime  @default(now())
@@ -185,6 +189,63 @@ model Client {
 
   @@index([status])
 }
+
+// ---------------------------------------------------------------------------
+// Lead
+// ---------------------------------------------------------------------------
+
+model Lead {
+  id      String     @id @default(uuid())
+  name    String
+  email   String
+  company String?
+  phone   String?
+  source  LeadSource @default(WEBSITE)
+  message String
+
+  service     String?
+  budgetRange String?
+
+  status LeadStatus @default(NEW)
+
+  // Staff member responsible for working this lead.
+  assignedToId String?
+  assignedTo   User?   @relation("AssignedUserLeads", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  // An existing client this lead is associated with (repeat business).
+  // Distinct from the conversion relation below — see schema header.
+  clientId String?
+  client   Client? @relation("ClientLeads", fields: [clientId], references: [id], onDelete: SetNull)
+
+  // --- AI qualification ---
+  qualificationScore   Int? // 0-100, null = not yet AI-processed
+  qualificationSummary String? // one-paragraph human-readable summary
+  qualificationReason  String? // why the AI reached this score/summary
+  aiProcessedAt        DateTime?
+
+  // --- n8n automation metadata ---
+  n8nSyncedAt    DateTime?
+  n8nExecutionId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Reverse side of Client.convertedFromLeadId (one-to-one).
+  convertedClient Client? @relation("LeadConversion")
+
+  // A lead can optionally result directly in a project.
+  convertedProject Project? @relation("LeadProject")
+
+  @@index([status])
+  @@index([email])
+  @@index([assignedToId])
+  @@index([clientId])
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Project
+// ---------------------------------------------------------------------------
 
 model Project {
   id          String        @id @default(uuid())
@@ -200,9 +261,13 @@ model Project {
   clientId String
   client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
-  // Project manager responsible (docs/09 "manager" field).
+  // Assigned project manager.
   managerId String?
   manager   User?   @relation("ProjectManager", fields: [managerId], references: [id], onDelete: SetNull)
+
+  // Optional: the lead that directly generated this project.
+  originatingLeadId String? @unique
+  originatingLead   Lead?   @relation("LeadProject", fields: [originatingLeadId], references: [id], onDelete: SetNull)
 
   tasks     Task[]
   createdAt DateTime @default(now())
@@ -213,6 +278,10 @@ model Project {
   @@index([managerId])
 }
 
+// ---------------------------------------------------------------------------
+// Task
+// ---------------------------------------------------------------------------
+
 model Task {
   id          String     @id @default(uuid())
   title       String
@@ -220,13 +289,12 @@ model Task {
   status      TaskStatus @default(TODO)
   priority    Priority   @default(MEDIUM)
   dueDate     DateTime?
-
-  // Added per docs/03 + docs/10 (needed for completion reporting).
   completedAt DateTime?
 
   projectId String
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
+  // Team member this task is assigned to.
   assigneeId String?
   assignee   User?   @relation("AssignedUserTasks", fields: [assigneeId], references: [id], onDelete: SetNull)
 
@@ -242,6 +310,10 @@ model Task {
   @@index([dueDate])
 }
 
+// ---------------------------------------------------------------------------
+// Notification
+// ---------------------------------------------------------------------------
+
 model Notification {
   id      String           @id @default(uuid())
   userId  String
@@ -251,70 +323,61 @@ model Notification {
   isRead  Boolean          @default(false)
   type    NotificationType @default(INFO)
 
-  // Added per docs/13 ("related entity") so a notification can deep-link.
+  // Optional deep-link to the entity this notification is about.
   entityType String?
   entityId   String?
 
   createdAt DateTime @default(now())
 
-  // Composite index: "unread notifications for this user" is the hot query.
+  // "unread notifications for this user" is the hot query — composite index.
   @@index([userId, isRead])
 }
 
-model AuditLog {
-  id        String   @id @default(uuid())
-  actorId   String?
-  actor     User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
-  action    String // e.g. "USER_LOGIN", "LEAD_QUALIFIED"
-  entity    String // e.g. "Lead", "Project", "Auth"
-  entityId  String?
-  details   String?
-  ipAddress String?
-  createdAt DateTime @default(now())
+// ---------------------------------------------------------------------------
+// AutomationRun — records a single n8n workflow execution
+// ---------------------------------------------------------------------------
 
-  @@index([actorId])
-  @@index([entity, entityId])
-  @@index([createdAt])
-}
-
-/// Stores the CONFIGURATION of an n8n workflow (which URL to call for an event).
-model N8nAutomation {
-  id         String    @id @default(uuid())
-  name       String
-  eventType  String    @unique // e.g. "LEAD_CREATED"
-  webhookUrl String
-  isActive   Boolean   @default(true)
-  runCount   Int       @default(0)
-  lastRunAt  DateTime?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-
-  runs AutomationRun[]
-}
-
-/// Stores the HISTORY of each individual automation execution.
-/// Required by docs/03 (automation_runs) and docs/11 (execution logging,
-/// retries, idempotency, failure alerts).
 model AutomationRun {
   id           String              @id @default(uuid())
   workflowName String
-  triggerType  String // e.g. "LEAD_CREATED"
-  entityType   String? // e.g. "Lead"
+  entityType   String? // e.g. "Lead", "Project"
   entityId     String?
-  status       AutomationRunStatus @default(PENDING)
   executionId  String? // id returned by n8n
+  status       AutomationRunStatus @default(PENDING)
   errorMessage String?
 
-  // Prevents the same event firing twice (docs/11 "idempotency keys").
+  // Prevents the same event firing the same workflow twice.
   idempotencyKey String? @unique
 
   startedAt   DateTime  @default(now())
   completedAt DateTime?
 
-  automationId String?
-  automation   N8nAutomation? @relation(fields: [automationId], references: [id], onDelete: SetNull)
-
   @@index([status])
   @@index([entityType, entityId])
   @@index([startedAt])
+}
+
+// ---------------------------------------------------------------------------
+// AuditLog — records important system actions
+// ---------------------------------------------------------------------------
+
+model AuditLog {
+  id     String  @id @default(uuid())
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  action   String // e.g. "USER_LOGIN", "LEAD_QUALIFIED"
+  entity   String // e.g. "Lead", "Project", "Auth"
+  entityId String?
+
+  // Structured metadata (e.g. { "oldStatus": "NEW", "newStatus": "QUALIFIED" }).
+  // Json, not free text, so it can be queried and stays machine-readable.
+  metadata Json?
+
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([createdAt])
 }

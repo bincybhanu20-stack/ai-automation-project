@@ -1,11 +1,12 @@
 import { prisma } from "./prisma";
+import type { Prisma } from "@prisma/client";
 
 export interface AuditEventParams {
-  actorId?: string;
+  userId?: string;
   action: string;
   entity: string;
   entityId?: string;
-  details?: string;
+  metadata?: Prisma.InputJsonValue;
   ipAddress?: string;
 }
 
@@ -13,11 +14,11 @@ export async function logAuditEvent(params: AuditEventParams) {
   try {
     await prisma.auditLog.create({
       data: {
-        actorId: params.actorId || null,
+        userId: params.userId || null,
         action: params.action,
         entity: params.entity,
         entityId: params.entityId || null,
-        details: params.details || null,
+        metadata: params.metadata ?? undefined,
         ipAddress: params.ipAddress || null,
       },
     });
