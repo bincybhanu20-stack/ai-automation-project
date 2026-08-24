@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { logAuditEvent } from "@/lib/audit";
 import { triggerN8nWebhook } from "@/lib/n8n";
+import { env } from "@/lib/env";
 import type { CreateTaskInput, UpdateTaskInput } from "@/lib/validations/admin-tasks";
 
 export const TASKS_PAGE_SIZE = 15;
@@ -85,10 +86,20 @@ export async function createTask(data: CreateTaskInput, actorId: string): Promis
   // The database write above has already committed — everything from here
   // is best-effort automation, same pattern as PROJECT_CREATED
   // (src/lib/services/admin/projects.ts).
+  //
+  // `body` is the exact shape WF-003's "Normalize Task Data" node expects
+  // (event: "task.created", task: {...}) — it reads $json.body.task.<field>
+  // directly. WF-003 also requires assigneeEmail, which the task record
+  // itself doesn't carry (only assigneeId), so it's looked up below.
+  const assignee = task.assigneeId
+    ? await prisma.user.findUnique({ where: { id: task.assigneeId }, select: { email: true } })
+    : null;
+
   await triggerN8nWebhook({
     eventType: "TASK_CREATED",
     entityType: "Task",
     entityId: task.id,
+    url: env.N8N_TASK_WEBHOOK_URL || undefined,
     payload: {
       taskId: task.id,
       title: task.title,
@@ -98,6 +109,18 @@ export async function createTask(data: CreateTaskInput, actorId: string): Promis
       status: task.status,
       priority: task.priority,
       dueDate: task.dueDate,
+    },
+    body: {
+      event: "task.created",
+      task: {
+        id: task.id,
+        title: task.title,
+        description: task.description ?? "",
+        priority: task.priority,
+        dueDate: task.dueDate ? task.dueDate.toISOString() : "",
+        assigneeEmail: assignee?.email ?? "",
+        projectName: project.title,
+      },
     },
   });
 

@@ -31,6 +31,12 @@ const envSchema = z.object({
   // --- n8n automation (optional in Phase 1, used from Phase 8) ---
   N8N_WEBHOOK_URL: z.string().url().optional().or(z.literal("")),
   N8N_WEBHOOK_SECRET: z.string().optional().or(z.literal("")),
+  // Each n8n workflow has its own distinct webhook URL — this one routes
+  // TASK_CREATED to WF-003 specifically instead of N8N_WEBHOOK_URL (which
+  // points at WF-001). Optional: when unset, TASK_CREATED simply isn't
+  // attempted (src/lib/services/admin/tasks.ts), same as any other
+  // unconfigured webhook.
+  N8N_TASK_WEBHOOK_URL: z.string().url().optional().or(z.literal("")),
 
   // --- Scheduled automation (Vercel Cron) ---
   // Vercel automatically sends `Authorization: Bearer <CRON_SECRET>` on

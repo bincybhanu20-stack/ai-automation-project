@@ -282,7 +282,7 @@ function, only added more call sites for it. Every call writes/updates one
 | `LEAD_CREATED` | Pre-existing | `src/lib/services/leads.ts` | Custom body (WF-001 shape, not the generic envelope below): `{ event: "lead.created", lead: { id, name, email, phone, company, service, budget, projectDescription } }` |
 | `PROJECT_CREATED` | Pre-existing | `src/lib/services/admin/projects.ts`, `admin/leads.ts` (lead conversion) | projectId, title, clientId, managerId, status |
 | `CLIENT_CREATED` | **New** | `convertLeadToClient()` in `src/lib/services/admin/leads.ts` | clientId, companyName, email, phone, convertedFromLeadId |
-| `TASK_CREATED` | **New** | `createTask()` in `src/lib/services/admin/tasks.ts` | taskId, title, projectId, projectTitle, assigneeId, status, priority, dueDate |
+| `TASK_CREATED` | **New** | `createTask()` in `src/lib/services/admin/tasks.ts` | Custom body (WF-003 shape) sent to `N8N_TASK_WEBHOOK_URL`, not the generic envelope: `{ event: "task.created", task: { id, title, description, priority, dueDate, assigneeEmail, projectName } }`. `assigneeEmail` is looked up from `assigneeId` since Task itself doesn't store it. |
 | `TASK_UPDATED` | **New** | `updateTask()` in `src/lib/services/admin/tasks.ts` | taskId, title, projectId, assigneeId, oldStatus, newStatus, statusChanged, priority, dueDate |
 | `PROJECT_UPDATED` | **New** | `changeProjectStatus()` in `src/lib/services/admin/projects.ts` | projectId, title, clientId, managerId, oldStatus, newStatus |
 | `CLIENT_FEEDBACK` | **New** | `createProjectMessage()` in `src/lib/services/client/messages.ts` (client-only call path) | messageId, projectId, projectTitle, authorId, body |
@@ -392,12 +392,13 @@ message succeeds and gets a normal response even if n8n is completely down.
 
 | Variable | New in this task? | Required? | Purpose |
 |---|---|---|---|
-| `N8N_WEBHOOK_URL` | No (pre-existing) | Optional | Outbound webhook target |
-| `N8N_WEBHOOK_SECRET` | No (pre-existing, reused) | Optional | Shared secret — both outbound header and now the inbound check in `verifyN8nSecret()` |
+| `N8N_WEBHOOK_URL` | No (pre-existing) | Optional | Outbound webhook target (WF-001) |
+| `N8N_TASK_WEBHOOK_URL` | **Yes** | Optional | Outbound webhook target for `TASK_CREATED` (WF-003) — separate from `N8N_WEBHOOK_URL` because each n8n workflow has its own URL, not a shared one. See the `url` override in `src/lib/n8n.ts`. |
+| `N8N_WEBHOOK_SECRET` | No (pre-existing, reused) | Optional | Shared secret — both outbound header and now the inbound check in `verifyN8nSecret()`. Used for every outbound URL above, including `N8N_TASK_WEBHOOK_URL`. |
 | `CRON_SECRET` | **Yes** | Optional (required for the cron route to accept any request) | Vercel's own convention for authenticating cron-triggered requests — see `src/lib/n8n-auth.ts` |
 
-No other environment variables were added. `.env.example` documents all
-three with comments explaining which direction/route each one guards.
+`.env.example` documents all four with comments explaining which
+direction/route each one guards.
 **Verify `N8N_WEBHOOK_URL`, `N8N_WEBHOOK_SECRET`, and `CRON_SECRET` are set
 in the Vercel project's Production environment**, not just local `.env` —
 the app runs correctly either way (every missing-config path degrades to a

@@ -1,5 +1,5 @@
 import { prisma } from "./prisma";
-import { env, isN8NConfigured } from "./env";
+import { env } from "./env";
 
 interface TriggerParams {
   /** e.g. "LEAD_CREATED" — becomes both the AutomationRun's workflowName and the event name n8n receives. */
@@ -16,6 +16,15 @@ interface TriggerParams {
    * every other event still relies on.
    */
   body?: Record<string, unknown>;
+  /**
+   * When set, POSTed to instead of the default N8N_WEBHOOK_URL. Each n8n
+   * workflow has its own distinct webhook URL (WF-001, WF-003, etc. don't
+   * share one) — a call site whose event maps to a specific workflow (e.g.
+   * TASK_CREATED -> WF-003) passes that workflow's URL here so it isn't
+   * misrouted to whatever workflow N8N_WEBHOOK_URL happens to point at.
+   * The shared N8N_WEBHOOK_SECRET/X-N8N-Secret header is used regardless.
+   */
+  url?: string;
 }
 
 /** Logs only the webhook URL's host+path — never the secret or full query string. */
@@ -52,6 +61,7 @@ export async function triggerN8nWebhook({
   entityId,
   payload,
   body,
+  url,
 }: TriggerParams): Promise<string | undefined> {
   const idempotencyKey = `${eventType}-${entityId}`;
 
@@ -67,22 +77,23 @@ export async function triggerN8nWebhook({
     },
   });
 
-  if (!isN8NConfigured) {
+  const targetUrl = url || env.N8N_WEBHOOK_URL;
+
+  if (!targetUrl?.trim() || !env.N8N_WEBHOOK_SECRET?.trim()) {
     console.error(
-      `[n8n] not attempted for ${eventType}/${entityId} (run ${run.id}): N8N_WEBHOOK_URL/N8N_WEBHOOK_SECRET unset`
+      `[n8n] not attempted for ${eventType}/${entityId} (run ${run.id}): webhook URL/N8N_WEBHOOK_SECRET unset`
     );
     await prisma.automationRun.update({
       where: { id: run.id },
       data: {
         status: "FAILED",
-        errorMessage: "n8n is not configured (N8N_WEBHOOK_URL/N8N_WEBHOOK_SECRET unset)",
+        errorMessage: "n8n is not configured (webhook URL/N8N_WEBHOOK_SECRET unset)",
         completedAt: new Date(),
       },
     });
     return undefined;
   }
 
-  const targetUrl = env.N8N_WEBHOOK_URL!;
   console.log(
     `[n8n] attempting ${eventType}/${entityId} (run ${run.id}) -> ${safeUrlForLogging(targetUrl)}`
   );
