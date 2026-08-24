@@ -106,6 +106,11 @@ export async function triggerN8nWebhook({
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        // Node's fetch() sends no User-Agent by default. Several of the
+        // n8n webhook trigger nodes this app calls have "ignoreBots"
+        // enabled, which can reject an unidentified/absent UA as
+        // automated traffic — independent of the X-N8N-Secret check below.
+        "User-Agent": "ClientFlow-App/1.0 (+https://ai-automation-project-eight.vercel.app)",
         // Shared secret so n8n can verify the request actually came from
         // this app, not an arbitrary caller who found the webhook URL. Must
         // be "X-N8N-Secret" — that's the exact header name n8n's Header
