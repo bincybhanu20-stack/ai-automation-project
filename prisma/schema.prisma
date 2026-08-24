@@ -350,6 +350,13 @@ model Project {
   createdAt  DateTime         @default(now())
   updatedAt  DateTime         @updatedAt
 
+  // AI-generated project summary (WF-010, n8n + Gemini). Stored as the
+  // whole structured result exactly as WF-010 produces it — see
+  // docs/n8n-integration.md for the shape. Display-only: this is never
+  // synced to or from the `status` field above.
+  aiSummary            Json?
+  aiSummaryGeneratedAt DateTime?
+
   @@index([clientId])
   @@index([status])
   @@index([managerId])

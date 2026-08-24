@@ -7,6 +7,7 @@ import { requireProjectStaff } from "@/lib/admin-guard";
 import { canManageProject } from "@/lib/authorization";
 import { getProjectById, getProjectManagerCandidates } from "@/lib/services/admin/projects";
 import { getClientOptions } from "@/lib/services/admin/clients";
+import { aiProjectSummarySchema } from "@/lib/validations/n8n";
 import { Card, CardHeader } from "@/components/admin/ui/Card";
 import { StatusBadge } from "@/components/admin/ui/StatusBadge";
 import { ProgressBar } from "@/components/admin/ui/ProgressBar";
@@ -47,6 +48,17 @@ export default async function AdminProjectDetailPage({ params }: { params: { id:
   const [managerCandidates, clients] = canEdit
     ? await Promise.all([getProjectManagerCandidates(), getClientOptions()])
     : [[], []];
+
+  // project.aiSummary is a Prisma Json field — never trust its shape blindly.
+  // Reusing the same Zod schema the write-back endpoint validates against
+  // (src/lib/validations/n8n.ts) means "what the API accepted" and "what
+  // this page will render" can never drift apart. A parse failure (e.g.
+  // malformed historical data) falls back to the empty state below rather
+  // than crashing the page.
+  const parsedAiSummary = project.aiSummary
+    ? aiProjectSummarySchema.safeParse(project.aiSummary)
+    : null;
+  const aiSummary = parsedAiSummary?.success ? parsedAiSummary.data : null;
 
   return (
     <div>
@@ -116,6 +128,50 @@ export default async function AdminProjectDetailPage({ params }: { params: { id:
                     deadline: project.deadline ? project.deadline.toISOString().slice(0, 10) : "",
                   }}
                 />
+              </div>
+            )}
+          </Card>
+
+          <Card>
+            <CardHeader
+              title="AI Project Summary"
+              description={
+                aiSummary ? `Last generated: ${formatDateTime(project.aiSummaryGeneratedAt)}` : undefined
+              }
+            />
+            {!aiSummary ? (
+              <p className="text-sm text-charcoal-muted">No AI summary has been generated yet.</p>
+            ) : (
+              <div className="space-y-5">
+                <p className="text-sm text-charcoal">{aiSummary.project_summary}</p>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  {/* Deliberately NOT the Project StatusBadge — this is the AI's own
+                      restated status from aiSummary.status, a free-text field never
+                      validated against the ProjectStatus enum and never written back
+                      to Project.status. A visually distinct pill keeps it from being
+                      mistaken for the real status shown in the sidebar. */}
+                  <span className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
+                    AI status: {aiSummary.status}
+                  </span>
+                  <span className="text-xs text-charcoal-muted">
+                    {aiSummary.progress.completion_percentage}% complete
+                  </span>
+                </div>
+                <ProgressBar value={aiSummary.progress.completion_percentage} />
+
+                <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-5">
+                  <Field label="Total" value={aiSummary.progress.total_tasks} />
+                  <Field label="Completed" value={aiSummary.progress.completed_tasks} />
+                  <Field label="In Progress" value={aiSummary.progress.in_progress_tasks} />
+                  <Field label="Pending" value={aiSummary.progress.pending_tasks} />
+                  <Field label="Overdue" value={aiSummary.progress.overdue_tasks} />
+                </dl>
+
+                <AiSummaryList title="Key Updates" items={aiSummary.key_updates} />
+                <AiSummaryList title="Risks" items={aiSummary.risks} />
+                <AiSummaryList title="Upcoming Deadlines" items={aiSummary.upcoming_deadlines} />
+                <AiSummaryList title="Recommended Actions" items={aiSummary.recommended_actions} />
               </div>
             )}
           </Card>
@@ -215,4 +271,47 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
       <dd className="mt-1 text-charcoal-dark">{value}</dd>
     </div>
   );
+}
+
+/** One bulleted section of the AI summary card. An empty array, or the
+ * model's own literal ["Not available"] (used when it has nothing grounded
+ * to say — see the WF-010 system prompt), both render as the same plain
+ * "Not available" line rather than an empty or single-bullet list. */
+function AiSummaryList({ title, items }: { title: string; items: string[] }) {
+  const isNotAvailable =
+    items.length === 0 || (items.length === 1 && items[0].trim().toLowerCase() === "not available");
+
+  return (
+    <div>
+      <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-charcoal-muted">{title}</h4>
+      {isNotAvailable ? (
+        <p className="text-sm text-charcoal-muted">Not available</p>
+      ) : (
+        <ul className="space-y-1.5 text-sm text-charcoal">
+          {items.map((item, index) => (
+            <li key={index} className="flex gap-2">
+              <span className="text-charcoal-muted">•</span>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/** Same null/invalid-date handling as formatDate (src/lib/utils.ts), plus a
+ * time component — kept local to this page rather than added to the shared
+ * utility, since nowhere else currently needs date+time together. */
+function formatDateTime(date: Date | string | null | undefined): string {
+  if (!date) return "—";
+  const d = typeof date === "string" ? new Date(date) : date;
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }

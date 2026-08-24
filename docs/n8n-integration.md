@@ -170,6 +170,100 @@ response, not from an unbound expression.
 
 ---
 
+## 3a. API Endpoint — AI Project Summary Write-back
+
+### `POST /api/n8n/projects/:id/summary`
+
+The write-back half of WF-010 (Prompt 30): once the AI node produces its
+structured summary, this endpoint saves it onto the project it's about, so
+it can be displayed later (the Admin Dashboard rendering itself is a
+separate, not-yet-built stage).
+
+**Purpose:** persist WF-010's existing structured output — nothing about
+what the AI produces, or the prompt that produces it, changes here.
+
+**Auth:** `X-N8N-Secret` header — the exact same shared secret, same header
+name, and same `verifyN8nSecret()` check as the context endpoint above. No
+second authentication mechanism was introduced.
+
+**Path parameter:** `id` — must be a valid UUID (`Project.id`). Same
+validation as the context endpoint: malformed → `400`, well-formed but
+missing → `404`.
+
+**Request body** — WF-010's output, unmodified:
+
+```jsonc
+{
+  "project_summary": "string, non-empty",
+  "status": "string, non-empty",
+  "progress": {
+    "total_tasks": 0,
+    "completed_tasks": 0,
+    "in_progress_tasks": 0,
+    "pending_tasks": 0,
+    "overdue_tasks": 0,
+    "completion_percentage": 0 // integer, 0-100
+  },
+  "key_updates": ["string", "..."],
+  "risks": ["string", "..."],
+  "upcoming_deadlines": ["string", "..."],
+  "recommended_actions": ["string", "..."]
+}
+```
+
+Validated by `aiProjectSummarySchema` in `src/lib/validations/n8n.ts`. All
+`progress` counts must be non-negative integers; `completion_percentage`
+must additionally be ≤ 100; every array must contain only strings.
+
+**Success response** (`200`):
+
+```json
+{
+  "success": true,
+  "projectId": "00000000-0000-0000-0000-000000000103",
+  "generatedAt": "2026-08-24T09:00:00.000Z"
+}
+```
+
+**Error responses:**
+
+| Condition | Status |
+|---|---|
+| Missing `X-N8N-Secret` header | `401` |
+| Wrong `X-N8N-Secret` value | `401` |
+| `N8N_WEBHOOK_SECRET` not configured server-side | `503` |
+| Malformed project id (not a UUID) | `400` |
+| Request body fails schema validation | `400`, with per-field `fieldErrors` |
+| Well-formed id, project doesn't exist | `404` |
+| Database/service failure | `500`, generic message only — no internals (query text, stack traces) ever reach the response body |
+
+**Example request:**
+
+```bash
+curl -X POST "https://ai-automation-project-eight.vercel.app/api/n8n/projects/00000000-0000-0000-0000-000000000103/summary" \
+  -H "X-N8N-Secret: <the real secret>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "project_summary": "The Website Revamp project is active with 35% progress.",
+    "status": "ACTIVE",
+    "progress": { "total_tasks": 1, "completed_tasks": 0, "in_progress_tasks": 1, "pending_tasks": 0, "overdue_tasks": 0, "completion_percentage": 35 },
+    "key_updates": ["Task \"Implement checkout flow\" is IN_PROGRESS."],
+    "risks": ["Not available"],
+    "upcoming_deadlines": ["2026-08-28: checkout flow due."],
+    "recommended_actions": ["Complete the checkout flow task."]
+  }'
+```
+
+**What this endpoint deliberately does NOT do:** it never modifies
+`Project.status`, `Project.progress`, `Project.priority`, `Project.deadline`,
+or any `Task`/`Milestone`/`Client` row. The AI's own `status`/`progress`
+fields inside the stored `aiSummary` JSON are the model's *restated*
+understanding of the project for display purposes — they are a separate,
+parallel value from the project's real, app-managed fields, never written
+into them. See `src/lib/services/n8n/project-summary.ts`.
+
+---
+
 ## 4. Outbound Events
 
 All outbound events go through the **existing, unmodified**
