@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { logAuditEvent } from "@/lib/audit";
+import { triggerN8nWebhook } from "@/lib/n8n";
 
 interface CreateMessageResult {
   success: boolean;
@@ -27,13 +28,31 @@ export async function createProjectMessage(
   });
   if (!project) return { success: false, error: "Project not found." };
 
-  await prisma.projectMessage.create({ data: { projectId, authorId, body } });
+  const message = await prisma.projectMessage.create({ data: { projectId, authorId, body } });
 
   await logAuditEvent({
     userId: authorId,
     action: "PROJECT_MESSAGE_SUBMITTED",
     entity: "Project",
     entityId: projectId,
+  });
+
+  // This function is only ever called from a requireRole(["CLIENT"])-gated
+  // action (src/lib/actions/client.ts submitProjectMessageAction) — every
+  // author here is a client, so this is exactly the "client feedback"
+  // event from the audit's Step 4 table (#9). Best-effort, same pattern as
+  // every other triggerN8nWebhook call site.
+  await triggerN8nWebhook({
+    eventType: "CLIENT_FEEDBACK",
+    entityType: "ProjectMessage",
+    entityId: message.id,
+    payload: {
+      messageId: message.id,
+      projectId,
+      projectTitle: project.title,
+      authorId,
+      body,
+    },
   });
 
   if (project.managerId) {

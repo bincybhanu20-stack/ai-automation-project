@@ -278,6 +278,24 @@ export async function convertLeadToClient(id: string, actorId: string): Promise<
     metadata: { clientId: client.id, companyName: client.companyName },
   });
 
+  // Best-effort automation, same pattern as PROJECT_CREATED/LEAD_CREATED
+  // elsewhere in this file. Fired on the Client, not the Lead — a
+  // downstream n8n workflow reacting to "a new client exists" cares about
+  // the client record, not the lead that produced it (convertedFromLeadId
+  // is included so it can still look the lead up if it needs to).
+  await triggerN8nWebhook({
+    eventType: "CLIENT_CREATED",
+    entityType: "Client",
+    entityId: client.id,
+    payload: {
+      clientId: client.id,
+      companyName: client.companyName,
+      email: client.email,
+      phone: client.phone,
+      convertedFromLeadId: lead.id,
+    },
+  });
+
   return { success: true };
 }
 

@@ -32,6 +32,12 @@ const envSchema = z.object({
   N8N_WEBHOOK_URL: z.string().url().optional().or(z.literal("")),
   N8N_WEBHOOK_SECRET: z.string().optional().or(z.literal("")),
 
+  // --- Scheduled automation (Vercel Cron) ---
+  // Vercel automatically sends `Authorization: Bearer <CRON_SECRET>` on
+  // cron-triggered requests when a variable with EXACTLY this name is set
+  // on the project. See src/lib/n8n-auth.ts verifyCronSecret().
+  CRON_SECRET: z.string().optional().or(z.literal("")),
+
   // --- AI (optional: ai.ts falls back to a rules engine when absent) ---
   OPENAI_API_KEY: z.string().optional().or(z.literal("")),
   AI_MODEL: z.string().optional().or(z.literal("")),
@@ -79,3 +85,12 @@ export const isAIConfigured = Boolean(env.OPENAI_API_KEY?.trim());
 export const isN8NConfigured = Boolean(
   env.N8N_WEBHOOK_URL?.trim() && env.N8N_WEBHOOK_SECRET?.trim()
 );
+
+/**
+ * True when a shared secret is set for authenticating n8n's INBOUND calls
+ * into this app (src/lib/n8n-auth.ts) and Vercel Cron's scheduled calls
+ * (CRON_SECRET). Split from isN8NConfigured because the outbound webhook
+ * URL is irrelevant to whether inbound calls can be verified.
+ */
+export const isN8NInboundConfigured = Boolean(env.N8N_WEBHOOK_SECRET?.trim());
+export const isCronConfigured = Boolean(env.CRON_SECRET?.trim());

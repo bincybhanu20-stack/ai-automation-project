@@ -302,6 +302,23 @@ export async function changeProjectStatus(
     metadata: { oldStatus: project.status, newStatus: status },
   });
 
+  // Best-effort automation — same pattern as PROJECT_CREATED above. Covers
+  // the "project update" / "project status changed" events from the audit
+  // (docs/28-existing-system-audit.md, Step 4 table, #5 and #7).
+  await triggerN8nWebhook({
+    eventType: "PROJECT_UPDATED",
+    entityType: "Project",
+    entityId: id,
+    payload: {
+      projectId: id,
+      title: project.title,
+      clientId: project.clientId,
+      managerId: project.managerId,
+      oldStatus: project.status,
+      newStatus: status,
+    },
+  });
+
   // Let the client know — a status change is exactly the kind of update the
   // client portal (previous phase) already has a dashboard/notifications
   // feed ready to surface. Only fires if this client has a portal login.

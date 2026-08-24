@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { logAuditEvent } from "@/lib/audit";
+import { triggerN8nWebhook } from "@/lib/n8n";
 import type { CreateTaskInput, UpdateTaskInput } from "@/lib/validations/admin-tasks";
 
 export const TASKS_PAGE_SIZE = 15;
@@ -81,6 +82,25 @@ export async function createTask(data: CreateTaskInput, actorId: string): Promis
     metadata: { projectId: task.projectId, assigneeId: task.assigneeId, status: task.status },
   });
 
+  // The database write above has already committed — everything from here
+  // is best-effort automation, same pattern as PROJECT_CREATED
+  // (src/lib/services/admin/projects.ts).
+  await triggerN8nWebhook({
+    eventType: "TASK_CREATED",
+    entityType: "Task",
+    entityId: task.id,
+    payload: {
+      taskId: task.id,
+      title: task.title,
+      projectId: task.projectId,
+      projectTitle: project.title,
+      assigneeId: task.assigneeId,
+      status: task.status,
+      priority: task.priority,
+      dueDate: task.dueDate,
+    },
+  });
+
   if (task.assigneeId) {
     await prisma.notification.create({
       data: {
@@ -130,6 +150,29 @@ export async function updateTask(id: string, data: UpdateTaskInput, actorId: str
     entity: "Task",
     entityId: id,
     metadata: { fields: Object.keys(data), oldStatus: existing.status, newStatus: data.status },
+  });
+
+  // Fires on every update, not just status changes — the payload's
+  // oldStatus/newStatus tells n8n whether this update included a status
+  // transition. Note: because src/lib/n8n.ts keys AutomationRun by
+  // `${eventType}-${entityId}`, repeated updates to the same task reuse one
+  // log row (it always reflects the latest attempt) — see
+  // docs/n8n-integration.md for this known idempotency-key behavior.
+  await triggerN8nWebhook({
+    eventType: "TASK_UPDATED",
+    entityType: "Task",
+    entityId: id,
+    payload: {
+      taskId: id,
+      title: data.title,
+      projectId: data.projectId,
+      assigneeId: data.assigneeId || null,
+      oldStatus: existing.status,
+      newStatus: data.status,
+      statusChanged: existing.status !== data.status,
+      priority: data.priority,
+      dueDate: data.dueDate || null,
+    },
   });
 
   if (data.assigneeId && data.assigneeId !== existing.assigneeId) {
