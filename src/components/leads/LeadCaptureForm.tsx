@@ -34,9 +34,9 @@ const EMPTY_FORM: LeadFormState = {
 };
 
 interface LeadCaptureFormProps {
-  /** "quote" shows the full field set (adds Budget). "contact" is the
-   * lighter version used on the Contact page — same underlying
-   * projectDescription field, just labeled "Message". */
+  /** "quote" and "contact" render the same field set, including the
+   * required Budget field — "contact" just labels projectDescription
+   * "Message" instead of "Tell us about your project". */
   variant?: "contact" | "quote";
 }
 
@@ -128,15 +128,15 @@ export function LeadCaptureForm({ variant = "quote" }: LeadCaptureFormProps) {
           onChange={(e) => update("service", e.target.value)}
         />
 
-        {variant === "quote" && (
-          <PublicSelect
-            id="budget"
-            label="Estimated budget"
-            options={BUDGET_OPTIONS}
-            value={form.budget}
-            onChange={(e) => update("budget", e.target.value)}
-          />
-        )}
+        <PublicSelect
+          id="budget"
+          label="Estimated budget"
+          required
+          options={BUDGET_OPTIONS}
+          value={form.budget}
+          onChange={(e) => update("budget", e.target.value)}
+        />
+        {fieldErrors.budget && <p className="-mt-4 text-xs text-crimson">{fieldErrors.budget}</p>}
       </div>
 
       <div>

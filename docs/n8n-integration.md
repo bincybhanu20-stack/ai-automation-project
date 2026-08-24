@@ -57,9 +57,15 @@ Two distinct credentials, two distinct trust boundaries — neither touches
 
 | Direction | Header | Env var | Verified by |
 |---|---|---|---|
-| App calls n8n | `X-Webhook-Secret` | `N8N_WEBHOOK_SECRET` | n8n itself (webhook node's credential check), unchanged |
+| App calls n8n | `X-N8N-Secret` | `N8N_WEBHOOK_SECRET` | n8n itself (the webhook trigger node's Header Auth credential) |
 | n8n calls app | `X-N8N-Secret` | `N8N_WEBHOOK_SECRET` (same value) | `verifyN8nSecret()` in `src/lib/n8n-auth.ts` |
 | Vercel Cron calls app | `Authorization: Bearer <value>` | `CRON_SECRET` | `verifyCronSecret()` in `src/lib/n8n-auth.ts` |
+
+**Both directions use the same header name.** An earlier version of this
+integration sent `X-Webhook-Secret` outbound, which did not match the
+`X-N8N-Secret` header name actually configured on n8n's webhook trigger
+node's Header Auth credential — every outbound call was silently rejected
+by n8n before it ever created an execution. Fixed in `src/lib/n8n.ts`.
 
 **Why the same `N8N_WEBHOOK_SECRET` value for both directions of the n8n
 relationship:** it's one shared secret between two systems (this app and
@@ -273,7 +279,7 @@ function, only added more call sites for it. Every call writes/updates one
 
 | Event | Status | Fired from | Payload |
 |---|---|---|---|
-| `LEAD_CREATED` | Pre-existing | `src/lib/services/leads.ts` | leadId, name, email, company, service, budgetRange, source |
+| `LEAD_CREATED` | Pre-existing | `src/lib/services/leads.ts` | Custom body (WF-001 shape, not the generic envelope below): `{ event: "lead.created", lead: { id, name, email, phone, company, service, budget, projectDescription } }` |
 | `PROJECT_CREATED` | Pre-existing | `src/lib/services/admin/projects.ts`, `admin/leads.ts` (lead conversion) | projectId, title, clientId, managerId, status |
 | `CLIENT_CREATED` | **New** | `convertLeadToClient()` in `src/lib/services/admin/leads.ts` | clientId, companyName, email, phone, convertedFromLeadId |
 | `TASK_CREATED` | **New** | `createTask()` in `src/lib/services/admin/tasks.ts` | taskId, title, projectId, projectTitle, assigneeId, status, priority, dueDate |

@@ -81,6 +81,11 @@ export async function createLeadFromPublicForm(
   // The database row above is already committed. Everything from here is
   // best-effort automation — its outcome never changes the result we
   // already have to return to the caller.
+  //
+  // `body` is the exact shape WF-001's "Normalize Lead Data" node expects
+  // (event: "lead.created", lead: {...}) — it reads $json.body.lead.<field>
+  // directly, so field names here must match theirs exactly (budget, not
+  // budgetRange; projectDescription, not message).
   const executionId = await triggerN8nWebhook({
     eventType: "LEAD_CREATED",
     entityType: "Lead",
@@ -94,6 +99,19 @@ export async function createLeadFromPublicForm(
       budgetRange: lead.budgetRange,
       source: lead.source,
       createdAt: lead.createdAt,
+    },
+    body: {
+      event: "lead.created",
+      lead: {
+        id: lead.id,
+        name: lead.name,
+        email: lead.email,
+        phone: lead.phone ?? "",
+        company: lead.company ?? "",
+        service: lead.service ?? "",
+        budget: lead.budgetRange ?? "",
+        projectDescription: lead.message,
+      },
     },
   });
 

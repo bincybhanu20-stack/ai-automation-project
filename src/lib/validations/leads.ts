@@ -44,11 +44,12 @@ function sanitizeText(value: unknown): unknown {
 /**
  * Lead capture form validation (requirements #1-4).
  *
- * Required: name, email, projectDescription — matches the Lead model's own
- * NOT NULL columns (prisma/schema.prisma), so this schema can never accept
- * something the database would then reject anyway.
- * Optional: phone, company, service, budget — matches the model's nullable
- * columns.
+ * Required: name, email, budget, projectDescription. budget is required on
+ * the form even though Lead.budgetRange is a nullable column — nullability
+ * there just reflects that older/admin-edited leads may not have one; every
+ * new public submission must supply one (BUDGET_OPTIONS includes "Not sure
+ * yet" for exactly this case, so "I don't know" is still a valid selection).
+ * Optional: phone, company, service — matches the model's nullable columns.
  */
 export const createLeadSchema = z.object({
   name: z.preprocess(
@@ -91,7 +92,9 @@ export const createLeadSchema = z.object({
 
   budget: z.preprocess(
     sanitizeText,
-    z.union([z.enum(BUDGET_OPTIONS), z.literal("")]).optional()
+    z.enum(BUDGET_OPTIONS, {
+      errorMap: () => ({ message: "Select an estimated budget" }),
+    })
   ),
 
   projectDescription: z.preprocess(
