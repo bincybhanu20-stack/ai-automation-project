@@ -270,6 +270,37 @@ into them. See `src/lib/services/n8n/project-summary.ts`.
 
 ---
 
+## 3b. API Endpoints — WF-001/WF-004/WF-005 Placeholder Fixes
+
+Three endpoints fill in placeholder URLs that were left unresolved in n8n
+node configs. All three use the same `verifyN8nSecret` auth as every other
+n8n -> app endpoint above.
+
+- **`POST /api/leads/qualification-result`** — WF-001's "Send Result to App
+  API" write-back. Body: `{ leadId, executionId, score, category, summary,
+  reason, recommendedAction, aiValid }`. Maps onto `Lead.qualificationScore/
+  Summary/Reason/aiProcessedAt` (the same columns the admin "Qualify" button
+  writes) plus `Lead.n8nExecutionId/n8nSyncedAt`. Does not touch
+  `Lead.status` — same "AI's restated understanding stays separate from
+  app-managed fields" principle as `saveProjectAiSummary()`. `category`/
+  `recommendedAction`/`aiValid` are validated but not persisted (no matching
+  columns; n8n's own `lead_qualification_log` Data Table keeps the full
+  record already). See `src/lib/services/n8n/lead-qualification.ts`.
+- **`GET /api/tasks/overdue`** — WF-004's "Fetch Overdue Tasks" data source.
+  Returns a plain JSON array (n8n auto-splits a top-level array response
+  into one item per element) of `{ id, title, project, dueDate, status,
+  assigneeEmail, assigneeName }` for every `Task` where `dueDate < now` and
+  `status != COMPLETED`.
+- **`GET /api/reports/weekly-stats`** — WF-005's "Fetch Weekly Statistics"
+  data source. Returns one JSON object with the 11 aggregate counts WF-005
+  expects (`newLeads`, `qualifiedLeads`, `wonLeads`, `lostLeads`,
+  `activeClients`, `activeProjects`, `completedProjects`, `openTasks`,
+  `completedTasks`, `overdueTasks`, `automationFailures`) — activity counts
+  are windowed to the last 7 days, state counts (`activeClients`,
+  `activeProjects`, `openTasks`, `overdueTasks`) are current snapshots.
+
+---
+
 ## 4. Outbound Events
 
 All outbound events go through the **existing, unmodified**

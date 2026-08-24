@@ -29,3 +29,22 @@ export const aiProjectSummarySchema = z.object({
 });
 
 export type AiProjectSummaryInput = z.infer<typeof aiProjectSummarySchema>;
+
+/**
+ * Validates the body of POST /api/leads/qualification-result — WF-001's
+ * "Send Result to App API" node output (see docs/n8n-integration.md). Same
+ * "machine-generated payload from a trusted, authenticated caller" reasoning
+ * as aiProjectSummarySchema above — no sanitization step needed.
+ */
+export const leadQualificationResultSchema = z.object({
+  leadId: z.string().uuid(),
+  executionId: z.string().min(1),
+  score: z.number().int().min(0).max(100),
+  category: z.enum(["HOT", "WARM", "COLD"]),
+  summary: z.string().min(1),
+  reason: z.string().min(1),
+  recommendedAction: z.string().min(1),
+  aiValid: z.boolean(),
+});
+
+export type LeadQualificationResultInput = z.infer<typeof leadQualificationResultSchema>;
