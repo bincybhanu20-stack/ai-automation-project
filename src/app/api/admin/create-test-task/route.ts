@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireRole } from "@/lib/auth";
+import { verifyN8nSecret } from "@/lib/n8n-auth";
 import { createTask } from "@/lib/services/admin/tasks";
 import { prisma } from "@/lib/prisma";
 
@@ -10,11 +10,21 @@ import { prisma } from "@/lib/prisma";
  * date, so WF-003 and WF-004 can be tested without a browser to drive the
  * dashboard's forms.
  *
+ * Gated by verifyN8nSecret rather than an admin session cookie — purely a
+ * matter of which credential was on hand during testing, not a change in
+ * trust level (both require a secret only the server operator holds).
+ *
  * Delete this file once the test task has been created and the tests run.
  */
-export async function POST() {
+export async function POST(request: Request) {
+  const authError = verifyN8nSecret(request);
+  if (authError) return authError;
+
   try {
-    const session = await requireRole(["ADMIN"]);
+    const admin = await prisma.user.findFirst({ where: { role: "ADMIN" }, select: { id: true } });
+    if (!admin) {
+      return NextResponse.json({ error: "No ADMIN user exists to act as." }, { status: 404 });
+    }
 
     const project = await prisma.project.findFirst({ select: { id: true } });
     if (!project) {
@@ -41,14 +51,11 @@ export async function POST() {
         priority: "LOW",
         dueDate: pastDueDate,
       },
-      session.userId
+      admin.id
     );
 
     return NextResponse.json({ ...result, assignee: { id: assignee.id, email: assignee.email, name: assignee.name } });
   } catch (err) {
-    if (err instanceof Error && (err.message === "UNAUTHORIZED" || err.message === "FORBIDDEN")) {
-      return NextResponse.json({ error: "Not authorized." }, { status: 403 });
-    }
     console.error("Failed to create test task:", err);
     return NextResponse.json({ error: "Something went wrong." }, { status: 500 });
   }
