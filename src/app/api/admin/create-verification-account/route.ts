@@ -37,3 +37,26 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ userId: user.id, email, password });
 }
+
+/**
+ * Cleanup half of the same temporary endpoint: deactivates the QA
+ * verification account once testing is complete. Calls the service
+ * function directly rather than deactivateUserAction() — that action's
+ * isSelf check is a UI convenience against accidental self-lockout, not a
+ * security boundary (unenforced server-side), and doesn't apply to a
+ * one-time-use test account being torn down deliberately.
+ */
+export async function DELETE(request: Request) {
+  const authError = verifyN8nSecret(request);
+  if (authError) return authError;
+
+  const email = "qa-verification@clientflow.local";
+  const user = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+  if (!user) {
+    return NextResponse.json({ error: "QA verification account not found." }, { status: 404 });
+  }
+
+  await prisma.user.update({ where: { id: user.id }, data: { status: "SUSPENDED" } });
+
+  return NextResponse.json({ success: true, userId: user.id, status: "SUSPENDED" });
+}
