@@ -15,7 +15,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const session = await getAuthSession();
 
   return (
-    <div className="flex min-h-screen bg-white text-charcoal-dark">
+    <div className="flex min-h-screen flex-col bg-white text-charcoal-dark lg:flex-row">
       <AdminSidebar role={session?.role} />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="hidden items-center justify-end border-b border-hairline px-6 py-3 lg:flex">
