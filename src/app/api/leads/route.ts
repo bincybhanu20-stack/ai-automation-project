@@ -71,15 +71,21 @@ export async function POST(request: Request) {
   try {
     const result = await createLeadFromPublicForm(parsed.data, { ipAddress: ip });
 
+    // 201 for a genuinely new record; 200 for the idempotent duplicate case
+    // (the request succeeded, but nothing new was created) — standard REST
+    // semantics, and `duplicate` in the body lets any caller that cares
+    // distinguish the two without relying on the status code alone. The
+    // public form itself only checks response.ok, which is true for both.
     return NextResponse.json(
       {
         success: true,
+        duplicate: result.status === "duplicate",
         message:
           result.status === "duplicate"
             ? "We've already received your inquiry and will be in touch shortly."
             : "Thanks! Your request has been received. We'll be in touch shortly.",
       },
-      { status: 201 }
+      { status: result.status === "duplicate" ? 200 : 201 }
     );
   } catch (error) {
     // Never leak internals (query text, stack traces, connection strings)

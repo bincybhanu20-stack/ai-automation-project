@@ -37,6 +37,14 @@ const envSchema = z.object({
   // attempted (src/lib/services/admin/tasks.ts), same as any other
   // unconfigured webhook.
   N8N_TASK_WEBHOOK_URL: z.string().url().optional().or(z.literal("")),
+  // WF-002's own webhook URL. Lead creation routes a second, independent
+  // call here (alongside N8N_WEBHOOK_URL/WF-001) — see the `url` override
+  // in src/lib/services/leads.ts. Optional: unset means the lead
+  // notification workflow simply isn't attempted.
+  N8N_LEAD_NOTIFICATION_WEBHOOK_URL: z.string().url().optional().or(z.literal("")),
+  // WF-010's own webhook URL. Triggered on demand from the project detail
+  // page's "Generate AI Summary" button (src/lib/actions/admin-projects.ts).
+  N8N_PROJECT_SUMMARY_WEBHOOK_URL: z.string().url().optional().or(z.literal("")),
 
   // --- Scheduled automation (Vercel Cron) ---
   // Vercel automatically sends `Authorization: Bearer <CRON_SECRET>` on

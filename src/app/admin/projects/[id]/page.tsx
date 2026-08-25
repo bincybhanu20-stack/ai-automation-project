@@ -13,6 +13,7 @@ import { StatusBadge } from "@/components/admin/ui/StatusBadge";
 import { ProgressBar } from "@/components/admin/ui/ProgressBar";
 import { formatDate } from "@/lib/utils";
 import { EditProjectForm } from "@/components/admin/projects/EditProjectForm";
+import { GenerateSummaryButton } from "@/components/admin/projects/GenerateSummaryButton";
 import { ChangeProjectStatusControl } from "@/components/admin/projects/ChangeProjectStatusControl";
 import { AssignManagerControl } from "@/components/admin/projects/AssignManagerControl";
 import { AssignClientControl } from "@/components/admin/projects/AssignClientControl";
@@ -139,6 +140,15 @@ export default async function AdminProjectDetailPage({ params }: { params: { id:
                 aiSummary ? `Last generated: ${formatDateTime(project.aiSummaryGeneratedAt)}` : undefined
               }
             />
+            {canEdit && (
+              <div className="mb-4">
+                <GenerateSummaryButton
+                  projectId={project.id}
+                  hasSummary={Boolean(aiSummary)}
+                  initialGeneratedAt={project.aiSummaryGeneratedAt ? project.aiSummaryGeneratedAt.toISOString() : null}
+                />
+              </div>
+            )}
             {!aiSummary ? (
               <p className="text-sm text-charcoal-muted">No AI summary has been generated yet.</p>
             ) : (

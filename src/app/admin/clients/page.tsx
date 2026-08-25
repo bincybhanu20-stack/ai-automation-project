@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Users2 } from "lucide-react";
 import { requireAdmin } from "@/lib/admin-guard";
 import { getClients } from "@/lib/services/admin/clients";
@@ -67,7 +68,11 @@ export default async function AdminClientsPage({
             <Tbody>
               {clients.map((client) => (
                 <Tr key={client.id}>
-                  <Td className="font-medium text-charcoal-dark">{client.companyName}</Td>
+                  <Td className="font-medium text-charcoal-dark">
+                    <Link href={`/admin/clients/${client.id}`} className="hover:text-violet-600">
+                      {client.companyName}
+                    </Link>
+                  </Td>
                   <Td>
                     <StatusBadge value={client.status} />
                   </Td>

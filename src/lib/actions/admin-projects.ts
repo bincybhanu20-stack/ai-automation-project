@@ -17,6 +17,7 @@ export interface ActionResult {
   error?: string;
   fieldErrors?: Record<string, string>;
   projectId?: string;
+  alreadyInFlight?: boolean;
 }
 
 function zodFieldErrors(issues: { path: (string | number)[]; message: string }[]) {
@@ -120,6 +121,31 @@ export async function changeProjectStatusAction(id: string, input: unknown): Pro
   } catch (err) {
     return authErrorResult(err);
   }
+}
+
+export async function generateProjectSummaryAction(id: string): Promise<ActionResult> {
+  try {
+    const { session } = await requireProjectManagementAccess(id);
+    const result = await projectsService.requestProjectAiSummary(id, session.userId);
+    // Deliberately no revalidatePath here — the summary hasn't been written
+    // yet (WF-010 runs asynchronously and calls back later). The client
+    // polls and calls router.refresh() itself once it detects the update.
+    return result;
+  } catch (err) {
+    return authErrorResult(err);
+  }
+}
+
+/** Poll target for GenerateSummaryButton.tsx. View-only (matches page-level
+ * access — any project staff can see this, not just this project's
+ * manager), so it uses the broader requireRole check rather than
+ * requireProjectManagementAccess's per-project ownership gate. */
+export async function getProjectAiSummaryStatusAction(
+  id: string
+): Promise<{ aiSummaryGeneratedAt: string | null }> {
+  await requireRole(["ADMIN", "PROJECT_MANAGER"]);
+  const result = await projectsService.getProjectAiSummaryStatus(id);
+  return { aiSummaryGeneratedAt: result?.aiSummaryGeneratedAt?.toISOString() ?? null };
 }
 
 function authErrorResult(err: unknown): ActionResult {

@@ -22,8 +22,9 @@ export function ForgotPasswordForm() {
     return (
       <div className="space-y-4">
         <Alert variant="success">
-          If an account exists for that email, a password reset link has been sent. In
-          development, check the server console for the link.
+          If an account exists for that email, a password reset link has been sent.
+          {process.env.NODE_ENV !== "production" &&
+            " In development, check the server console for the link."}
         </Alert>
         <Link href="/login" className="text-sm text-sky-400 hover:text-sky-300">
           Back to login

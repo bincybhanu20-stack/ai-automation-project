@@ -1,9 +1,17 @@
 import { prisma } from "@/lib/prisma";
 import { logAuditEvent } from "@/lib/audit";
 import { triggerN8nWebhook } from "@/lib/n8n";
+import { env } from "@/lib/env";
 import { computeProjectProgress } from "@/lib/services/project-progress";
 import type { ProjectStatus, Role } from "@prisma/client";
 import type { CreateProjectInput, UpdateProjectInput } from "@/lib/validations/admin-projects";
+
+// How long a "PROJECT_AI_SUMMARY_REQUESTED" AutomationRun is treated as
+// still in flight — matches WF-010's observed ~15-30s run time plus a
+// margin, so a double-click on the Generate button is rejected as a
+// duplicate rather than firing WF-010 (and its AI call) twice, but a truly
+// stuck/failed prior attempt doesn't lock the button out forever.
+const AI_SUMMARY_IN_FLIGHT_WINDOW_MS = 3 * 60 * 1000;
 
 export const PROJECTS_PAGE_SIZE = 15;
 
@@ -220,6 +228,82 @@ export async function updateProjectDetails(
   });
 
   return { success: true };
+}
+
+interface RequestAiSummaryResult extends ActionResult {
+  alreadyInFlight?: boolean;
+}
+
+/**
+ * Triggers WF-010 for this project — the real, app-side trigger for the AI
+ * Project Summary feature (previously only reachable by manually running
+ * the workflow inside n8n). Fire-and-forget from the caller's perspective:
+ * WF-010's webhook responds immediately ("Workflow got started"), then runs
+ * asynchronously and calls POST /api/n8n/projects/:id/summary
+ * (src/lib/services/n8n/project-summary.ts) when it finishes, which is what
+ * actually updates Project.aiSummary. The UI polls for that update — see
+ * GenerateSummaryButton.tsx.
+ */
+export async function requestProjectAiSummary(
+  id: string,
+  actorId: string
+): Promise<RequestAiSummaryResult> {
+  const project = await prisma.project.findUnique({
+    where: { id },
+    select: { id: true, aiSummaryGeneratedAt: true },
+  });
+  if (!project) return { success: false, error: "Project not found." };
+
+  // WF-010's webhook acks almost instantly ("Workflow got started"), so the
+  // AutomationRun row for this trigger reaches SUCCESS within ~1s regardless
+  // of how long the actual AI run takes (15-30s observed) — a raw PENDING
+  // check would never catch a double-click. What actually means "still
+  // generating" is: we successfully fired the trigger recently, and the
+  // async callback (saveProjectAiSummary(), which bumps
+  // aiSummaryGeneratedAt) hasn't landed since.
+  const idempotencyKey = `PROJECT_AI_SUMMARY_REQUESTED-${id}`;
+  const existingRun = await prisma.automationRun.findUnique({ where: { idempotencyKey } });
+  const stillWaitingOnCallback =
+    existingRun?.status === "SUCCESS" &&
+    existingRun.completedAt &&
+    Date.now() - existingRun.completedAt.getTime() < AI_SUMMARY_IN_FLIGHT_WINDOW_MS &&
+    (!project.aiSummaryGeneratedAt || project.aiSummaryGeneratedAt < existingRun.completedAt);
+
+  if (stillWaitingOnCallback) {
+    return {
+      success: false,
+      alreadyInFlight: true,
+      error: "A summary is already being generated for this project. Please wait a moment.",
+    };
+  }
+
+  await logAuditEvent({
+    userId: actorId,
+    action: "PROJECT_AI_SUMMARY_REQUESTED",
+    entity: "Project",
+    entityId: id,
+  });
+
+  await triggerN8nWebhook({
+    eventType: "PROJECT_AI_SUMMARY_REQUESTED",
+    entityType: "Project",
+    entityId: id,
+    url: env.N8N_PROJECT_SUMMARY_WEBHOOK_URL || undefined,
+    payload: { projectId: id },
+    body: { projectId: id },
+  });
+
+  return { success: true };
+}
+
+/** Lightweight poll target for GenerateSummaryButton.tsx — just the one
+ * timestamp it needs to detect that WF-010's async callback has landed,
+ * without re-fetching the whole project. */
+export async function getProjectAiSummaryStatus(id: string) {
+  return prisma.project.findUnique({
+    where: { id },
+    select: { aiSummaryGeneratedAt: true },
+  });
 }
 
 export async function assignProjectManager(

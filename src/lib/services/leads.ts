@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { logAuditEvent } from "@/lib/audit";
 import { triggerN8nWebhook } from "@/lib/n8n";
+import { env } from "@/lib/env";
 import type { CreateLeadInput } from "@/lib/validations/leads";
 
 // Same email submitting the same service inquiry within this window is
@@ -121,6 +122,35 @@ export async function createLeadFromPublicForm(
       data: { n8nSyncedAt: new Date(), n8nExecutionId: executionId },
     });
   }
+
+  // WF-002 (Lead Notification) is a second, independent n8n workflow from
+  // WF-001 (Lead Qualification) — its own webhook, its own AutomationRun
+  // row (distinct eventType, so this doesn't overwrite the LEAD_CREATED row
+  // above), best-effort same as every other triggerN8nWebhook call site.
+  // `body` matches WF-002's "Normalize Lead Data" node exactly: top-level
+  // leadId/name/email/company/service/message (not the nested `lead: {}}`
+  // shape WF-001 expects).
+  await triggerN8nWebhook({
+    eventType: "LEAD_NOTIFICATION_SENT",
+    entityType: "Lead",
+    entityId: lead.id,
+    url: env.N8N_LEAD_NOTIFICATION_WEBHOOK_URL || undefined,
+    payload: {
+      leadId: lead.id,
+      name: lead.name,
+      email: lead.email,
+      company: lead.company,
+      service: lead.service,
+    },
+    body: {
+      leadId: lead.id,
+      name: lead.name,
+      email: lead.email,
+      company: lead.company ?? "",
+      service: lead.service ?? "",
+      message: lead.message,
+    },
+  });
 
   return { status: "created", leadId: lead.id };
 }
