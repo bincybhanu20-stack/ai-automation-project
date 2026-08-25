@@ -57,7 +57,7 @@ export default async function AdminReportsPage() {
       <h1 className="text-2xl font-bold text-charcoal-dark">Reports</h1>
       <p className="mt-1 text-sm text-charcoal-muted">Live metrics computed from the current database.</p>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader title="Leads" />
           <MetricRow label="Total leads" value={String(m.totalLeads)} />

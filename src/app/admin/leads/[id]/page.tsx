@@ -60,7 +60,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         <StatusBadge value={lead.status} />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Main column */}
         <div className="space-y-6 lg:col-span-2">
           <Card>

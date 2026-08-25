@@ -97,7 +97,7 @@ export default async function AdminProjectDetailPage({ params }: { params: { id:
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Main column: overview, tasks, activity */}
         <div className="space-y-6 lg:col-span-2">
           <Card>

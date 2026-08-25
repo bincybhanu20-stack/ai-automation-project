@@ -56,7 +56,7 @@ export default async function ClientDashboardPage() {
         <StatCard label="Unread notifications" value={unreadCount} icon={Bell} tone="warning" />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Projects + progress */}
         <div className="lg:col-span-2">
           <Card>

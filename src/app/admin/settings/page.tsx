@@ -38,7 +38,7 @@ export default async function AdminSettingsPage() {
       <h1 className="text-2xl font-bold text-charcoal-dark">Settings</h1>
       <p className="mt-1 text-sm text-charcoal-muted">Live system configuration.</p>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader title="Integrations" description="Configured via server-side environment variables." />
           <div className="space-y-4">

@@ -63,7 +63,7 @@ export default async function ClientProjectDetailPage({ params }: { params: { id
         </dl>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Milestones */}
         <Card>
           <CardHeader title="Milestones" />

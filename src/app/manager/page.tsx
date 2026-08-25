@@ -83,14 +83,14 @@ export default async function ManagerPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
           <StatCard label="Projects You Manage" value={data.projectsManaged} icon={FolderKanban} accent="violet" />
           <StatCard label="Tasks Assigned to You" value={data.tasksAssigned} icon={CheckSquare} accent="amber" />
           <StatCard label="Overdue Tasks" value={data.overdueTasks} icon={AlertTriangle} tone="warning" />
           <StatCard label="Unread Notifications" value={data.unreadNotifications} icon={Bell} accent="indigo" />
         </div>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
           <Card>
             <CardHeader title="Your tasks by status" description="Live breakdown of tasks assigned to you." />
             {totalTasks === 0 ? (
@@ -115,7 +115,7 @@ export default async function ManagerPage() {
           </Card>
         </div>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
           <Card>
             <CardHeader title="Upcoming deadlines" description="Your tasks due in the next two weeks." />
             {data.upcomingDeadlines.length === 0 ? (
